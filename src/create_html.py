@@ -14,14 +14,17 @@ def create_html(root_path: str, theme: str, config, content) -> None:
     # TODO: Use dynamic output file name (this will come with having content as file)
     shutil.copyfile(f'{theme}/templates/base.html', f"output/content.html")
 
+    content_file = open(f"{content}", 'r')
+
     # Thanks https://www.geeksforgeeks.org/python/how-to-search-and-replace-text-in-a-file-in-python/ for reading and writing to portion of file
     # Will replace portions in html file with our content
     # TODO: Need to do all places in HTML
     # TODO: Need to get content from a file
     with open(f"output/content.html", 'r') as output_file:
         data = output_file.read()
-        data = data.replace("{{CONTENT}}", content)
+        data = data.replace("{{CONTENT}}", content_file.read())
 
     with open(f"output/content.html", 'w') as output_file:
         output_file.write(data)
     
+    content_file.close()
