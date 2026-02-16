@@ -1,9 +1,9 @@
 import shutil
 import os
 
-def create_html(theme, config, content):
+def create_html(root_path: str, theme: str, config, content) -> None:
     # Change directory to root, thanks https://stackoverflow.com/a/32470697
-    os.chdir('../')
+    os.chdir(root_path)
 
     # Copy template file from theme to output dir, thanks https://stackoverflow.com/a/123212
     try:
