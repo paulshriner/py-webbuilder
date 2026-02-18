@@ -6,19 +6,14 @@
 '''
 
 import os
+from file import get_file_name
 
-def generate_html(root_path: str, temp_file_path: str) -> None:
-    # Change directory to root
-    os.chdir(root_path)
-
+def generate_html(temp_file_path: str) -> None:
     # Get name to use for temp file
-    # Use rfind to get last slash in directory
-    # If it's -1 then whole name would be used
-    slash_index = temp_file_path.rfind('/')
-    file_name = temp_file_path[slash_index+1:][0:-4]
+    file_name = get_file_name(temp_file_path)[0]
 
     temp_file = open(temp_file_path, 'r')
-    final_file = open(f"temp/{file_name}.final", 'w')
+    final_file = open(f"../temp/{file_name}.final", 'w')
     html_line = []
     index = 0
     for line in temp_file:
