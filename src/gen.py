@@ -1,3 +1,10 @@
+'''
+    py-webbuilder
+    Author: Paul Shriner
+
+    gen: Converts intermediate code into HTML
+'''
+
 import os
 
 def generate_html(root_path: str, temp_file_path: str) -> None:

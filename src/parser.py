@@ -1,18 +1,25 @@
+'''
+    py-webbuilder
+    Author: Paul Shriner
+
+    parser: Converts Markdown into intermediate code
+'''
+
 import os
 from typing import TextIO
 
 # Entry function to parse a Markdown file
 # Takes the root path and the path to a Markdown file
 # Will create tmp file with parsed content
-def parse_content_file(root_path: str, file: str) -> None:
+def parse_content_file(root_path: str, file_path: str) -> None:
     # Change directory to root
     os.chdir(root_path)
 
     # Get name to use for temp file
     # Use rfind to get last slash in directory
     # If it's -1 then whole name would be used
-    slash_index = file.rfind('/')
-    file_name = file[slash_index+1:][0:-3]
+    slash_index = file_path.rfind('/')
+    file_name = file_path[slash_index+1:][0:-3]
 
     try:
         # Create temp dir if needed, if already exists just continue
@@ -20,7 +27,7 @@ def parse_content_file(root_path: str, file: str) -> None:
     except FileExistsError:
         pass
 
-    input_file = open(f"{file}", 'r')
+    input_file = open(f"{file_path}", 'r')
     temp_file = open(f"temp/{file_name}.tmp", 'w')
     for line in input_file:
         cur_line = parse_markdown_block(temp_file, line)
