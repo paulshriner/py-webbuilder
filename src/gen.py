@@ -2,12 +2,12 @@
     py-webbuilder
     Author: Paul Shriner
 
-    gen: Converts intermediate code into HTML
+    gen: Converts intermediate code into final code
 '''
 
-import os
 from file import get_file_name
 
+# Generates HTML code from a parsed intermediate file
 def generate_html(temp_file_path: str) -> None:
     # Get name to use for temp file
     file_name = get_file_name(temp_file_path)[0]

@@ -5,14 +5,14 @@
     parser: Converts Markdown into intermediate code
 '''
 
-import os
-from typing import TextIO
 from file import get_file_name, create_dir
 
 # Entry function to parse a Markdown file
 # Takes the path to a Markdown file
 # Will create tmp file with parsed content
-def parse_content_file(file_path: str) -> None:
+def parse_content_file(file_path: str) -> dict:
+    config = {}
+    
     # Get name to use for temp file
     file_name = get_file_name(file_path)[0]
 
@@ -21,27 +21,66 @@ def parse_content_file(file_path: str) -> None:
 
     input_file = open(f"{file_path}", 'r')
     temp_file = open(f"../temp/{file_name}.tmp", 'w')
+    in_file = False
+    in_config = False
     for line in input_file:
-        cur_line = parse_markdown_block(temp_file, line)
-        temp_file.write(cur_line[1])
+        if not in_file:
+            in_file = True
+            cur_line = parse_config_block(line)
+            if cur_line[1] == "<CONFIG_BEGIN>":
+                in_config = True
+                continue
+        
+        if in_config:
+            cur_line = parse_config_block(line)
+            if cur_line[1] == "<CONFIG_END>":
+                in_config = False
+            else:
+                config[cur_line[1]] = cur_line[2][0:-1]
+            continue
+
+        cur_line = parse_markdown_block(line)
+        temp_file.write(cur_line[1] + '\n')
+        temp_file.write(cur_line[2])
         temp_file.write("<NEW_LINE>\n")
 
     # Close files when done
     input_file.close()
     temp_file.close()
 
+    return config
+
+# Parses the block elements for configuration items
+def parse_config_block(line: str) -> tuple[bool, str, str]:
+    # Parse start and end of config
+    if line.rstrip() == '{':
+        return (True, "<CONFIG_BEGIN>", "")
+    if line.rstrip() == '}':
+        return (True, "<CONFIG_END>", "")
+    
+    parts = line.split(": ")
+    # Config entries should only have two parts
+    if len(parts) != 2:
+        return (True, "<ERROR>", "")
+    
+    # Home entry (appears in tho left corner of page)
+    # TODO: These lines need to be sanitized
+    if parts[0] == "Home":
+        return (True, "<CONFIG_HOME>", parts[1])
+    
+    # TODO: Rest of config entries
+    return (False, "<TEXT>", line)
+
 # Will parse the block element for a line, this could be heading, blockquote, list, etc.
 # https://www.markdownguide.org/basic-syntax/ - Markdown syntax reference
-# Takes a file pointer for a temp file and a Markdown line to process
-# Outputs a tuple in the format (bool, str) where bool represents if there could be more blocks
-# and str is the line with the heading removed
+# Takes a Markdown line to process
+# Outputs a tuple in the format (bool, str, str) where bool represents if there could be more blocks
+# first str is token and second str is the line with the token removed
 # TODO: Have better documentation, such as by using docstrings
-# Thanks https://stackoverflow.com/a/58887007 for type hinting for file pointer
-def parse_markdown_block(temp_file: TextIO, line: str) -> tuple[bool, str]:
+def parse_markdown_block(line: str) -> tuple[bool, str, str]:
     # Nothing in line or user skipped lines
     if not line or line == "\n":
-        temp_file.write(f"<EMPTY_LINE>")
-        return (False, line)
+        return (False, "<EMPTY_LINE>", "")
     
     # Check if line represents a heading
     # If we find one #, keep count until space found
@@ -53,11 +92,9 @@ def parse_markdown_block(temp_file: TextIO, line: str) -> tuple[bool, str]:
             if heading_len > 6:
                 break
         elif i == ' ' and heading_len >= 0:
-            temp_file.write(f"<HEADING_{heading_len}>\n")
-            return (True, line[heading_len+1:])
+            return (True, f"<HEADING_{heading_len}>", line[heading_len+1:])
         else:
             break
 
     # TODO: Implement more Markdown syntax
-    temp_file.write(f"<TEXT>\n")
-    return (False, line)
+    return (False, "<TEXT>", line)
