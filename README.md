@@ -10,7 +10,9 @@ The idea of this project is to allow creating a static website through Markdown 
 
 - Parse common Markdown syntax and generate corresponding HTML [In Progress]
 - Create HTML documents based on template files from default theme or user-specified theme [In Progress]
-- Use a configuration Markdown file for site-wide constants like the title in the header [Not Started]
+- Use a configuration Markdown file for site-wide constants like the title in the header [In Progress]
+- Sanitize HTML in content files to ensure security [Not Started]
+- Check modified file dates of input files and only rebuild if newer than output [Not Started]
 - Have a CLI (GUI?) for setting options [Not Started]
 - ...more as I develop the project!
 
