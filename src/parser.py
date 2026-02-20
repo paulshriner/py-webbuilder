@@ -22,9 +22,11 @@ def parse_content_file(file_path: str) -> dict:
 
     input_file = open(f"{file_path}", 'r')
     temp_file = open(f"../temp/{file_name}.tmp", 'w')
+    # Keep track of if we're in config, as these need to be handled separately
     in_file = False
     in_config = False
     for line in input_file:
+        # See if we're in config
         if not in_file:
             in_file = True
             cur_line = parse_config_block(line)
@@ -32,14 +34,17 @@ def parse_content_file(file_path: str) -> dict:
                 in_config = True
                 continue
         
+        # If in config, keep going until end bracket found
+        # (If <CONFIG_END> is not found it will keep going in config, but this is an invalid input)
         if in_config:
             cur_line = parse_config_block(line)
             if cur_line[1] == "<CONFIG_END>":
                 in_config = False
             else:
-                config[cur_line[1]] = parse_config_line(sanitize_line(cur_line[2][0:-1]))
+                config[cur_line[1]] = parse_config_line(cur_line[1], sanitize_line(cur_line[2][0:-1]))
             continue
 
+        # Either we're done with config or user never added one, so proceed with standard markdown
         cur_line = parse_markdown_block(line)
         temp_file.write(cur_line[1] + '\n')
         temp_file.write(sanitize_line(cur_line[2]))
@@ -64,11 +69,13 @@ def parse_config_block(line: str) -> tuple[bool, str, str]:
     if len(parts) != 2:
         return (True, "<ERROR>", "")
     
-    # Home entry (appears in tho left corner of page)
+    # Home entry (appears in the left corner of page)
     if parts[0] == "Home":
         return (True, "<CONFIG_HOME>", parts[1])
+    # Navigation links
     if parts[0] == "Links":
-        return (False, "<CONFIG_LINKS>", parts[1])
+        return (False, "<CONFIG_NAV_LINKS>", parts[1])
+    # Footer information
     if parts[0] == "Footer":
         return (False, "<CONFIG_FOOTER>", parts[1])
     
@@ -80,9 +87,9 @@ def parse_config_block(line: str) -> tuple[bool, str, str]:
 # TODO: Parse other elements
 # TODO: Different lines need to be handled differently (title line should not have markdown links)
 # TODO: This may get combined with an overall "parse_line" function
-def parse_config_line(line: str) -> str:
+def parse_config_line(token: str, line: str):
     # Thanks https://regex101.com/r/6irz8e/2 for Markdown link regex
-    pattern = r'\[([^\]]+)\]\(([^)]+())\)'
+    link_pattern = r'\[([^\]]+)\]\(([^)]+())\)'
     
     # Thanks https://www.geeksforgeeks.org/python/re-matchobject-group-function-in-python-regex/ for match group
     def convert_link(match):
@@ -90,9 +97,15 @@ def parse_config_line(line: str) -> str:
         link = match.group(1)
 
         return f'<a href="{preview}" target="_blank">{link}</a>'
-
-    # Thanks https://www.geeksforgeeks.org/python/re-sub-python-regex/ for re.sub
-    parsed_line = re.sub(pattern, convert_link, line)
+    
+    # Navigation links should just be links, that's it
+    parsed_line = line
+    if token == "<CONFIG_NAV_LINKS>":
+        matches = re.findall(link_pattern, line)
+        parsed_line = [f'<a href="{i[1]}" target="_blank">{i[0]}</a>' for i in matches]
+    elif token != "<CONFIG_HOME>":
+        # Thanks https://www.geeksforgeeks.org/python/re-sub-python-regex/ for re.sub
+        parsed_line = re.sub(link_pattern, convert_link, line)
 
     return parsed_line
 

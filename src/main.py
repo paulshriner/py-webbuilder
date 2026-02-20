@@ -11,6 +11,7 @@ from finalize import create_html
 
 def main():
     global_config = parse_content_file('../input/global.md')
+    global_config["<CONFIG_HOME_LINK>"] = 'index.html'
     page_config = parse_content_file('../input/index.md')
     generate_html('../temp/index.tmp')
     create_html('../themes/default', global_config, page_config, '../temp/index.final')

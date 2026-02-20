@@ -32,6 +32,10 @@ def create_html(theme: str, global_config: dict, page_config: dict, final_file_p
         for key, val in global_config.items():
             if key == "<CONFIG_HOME>":
                 data = data.replace("{{NAV_TITLE}}", val)
+            if key == "<CONFIG_HOME_LINK>":
+                data = data.replace("{{NAV_TITLE_LINK}}", val)
+            if key == '<CONFIG_NAV_LINKS>':
+                data = data.replace("{{NAV_LINKS}}", "".join(val))
             if key == "<CONFIG_FOOTER>":
                 data = data.replace("{{FOOTER_INFO}}", val)
 
