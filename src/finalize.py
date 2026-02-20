@@ -32,6 +32,8 @@ def create_html(theme: str, global_config: dict, page_config: dict, final_file_p
         for key, val in global_config.items():
             if key == "<CONFIG_HOME>":
                 data = data.replace("{{NAV_TITLE}}", val)
+            if key == "<CONFIG_FOOTER>":
+                data = data.replace("{{FOOTER_INFO}}", val)
 
     with open(f"../output/{output_file_name}.html", 'w') as output_file:
         output_file.write(data)
