@@ -6,6 +6,7 @@
 '''
 
 import os
+from typing import TextIO
 
 # Takes in a file path
 # Returns a tuple of format (filename, ext)
@@ -26,3 +27,16 @@ def create_dir(name: str) -> None:
         os.mkdir(f'../{name}')
     except FileExistsError:
         pass
+
+# Return a line without advancing the file pointer (file peek)
+# Specify number of lines to skip using lines
+# Thanks https://stackoverflow.com/a/16840747 for file peeking
+# Thanks https://stackoverflow.com/a/58887007 for type hinting for file pointer
+def peek(f: TextIO, lines: int) -> str:
+    pos = f.tell()
+    line = ""
+    for i in range(0, lines):
+        line = f.readline()
+    f.seek(pos)
+
+    return line

@@ -80,7 +80,7 @@ def parse_config_block(line: str) -> tuple[bool, str, str]:
         return (False, "<CONFIG_FOOTER>", parts[1])
     
     # TODO: Rest of config entries
-    return (False, "<TEXT>", line)
+    return (False, "<ERROR>", line)
 
 # Parses elements within config line
 # Currently it parses links using regex
@@ -103,6 +103,7 @@ def parse_config_line(token: str, line: str):
     if token == "<CONFIG_NAV_LINKS>":
         matches = re.findall(link_pattern, line)
         parsed_line = [f'<a href="{i[1]}" target="_blank">{i[0]}</a>' for i in matches]
+    # Anything else can be text and links, except the home link which is just text (link is always the home page)
     elif token != "<CONFIG_HOME>":
         # Thanks https://www.geeksforgeeks.org/python/re-sub-python-regex/ for re.sub
         parsed_line = re.sub(link_pattern, convert_link, line)
@@ -119,21 +120,40 @@ def parse_config_line(token: str, line: str):
 def parse_markdown_block(line: str) -> tuple[bool, str, str]:
     # Nothing in line or user skipped lines
     if not line or line == "\n":
-        return (False, "<EMPTY_LINE>", "")
+        return (True, "<EMPTY_LINE>", "")
+    
+    # Consume starting spaces
+    indents = 0
+    start_line = 0
+    for i, val in enumerate(line):
+        if val == ' ':
+            if i % 4 == 0:
+                indents += 1
+            start_line += 1
+        else:
+            break
+
+    # Remove beginning spaces from line
+    stripped_line = line[start_line:]
     
     # Check if line represents a heading
     # If we find one #, keep count until space found
     # If we go past 6 headings, or no space is found, it's not a heading
     heading_len = 0
-    for i in line:
+    for i in stripped_line:
         if i == '#':
             heading_len += 1
             if heading_len > 6:
                 break
         elif i == ' ' and heading_len >= 0:
-            return (True, f"<HEADING_{heading_len}>", line[heading_len+1:])
+            return (True, f"<HEADING_{heading_len}>", stripped_line[heading_len+1:])
         else:
             break
+
+    # Check if line represents an unordered list
+    # TODO: Need to add nested lists
+    if stripped_line.startswith('- ') or stripped_line.startswith('* ') or stripped_line.startswith('+ '):
+        return (True, f"<UNORDERED_LIST>", stripped_line[2:])
 
     # TODO: Implement more Markdown syntax
     return (False, "<TEXT>", line)
