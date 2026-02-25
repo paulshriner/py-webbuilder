@@ -23,30 +23,31 @@ def generate_html(temp_file_path: str) -> None:
     while line:
         line_stripped = line[0:-1]
 
-        match line_stripped:
-            case "<UNORDERED_LIST>":
-                html_line.append(generate_list(temp_ptr, line_stripped))
-                index += 1
-            case "<NEW_LINE>":
-                # If new line is found outside of another condition (like list)
-                # Then we're done, print the line and clear it
-                final_ptr.write("".join(html_line) + "\n")
-                html_line = []
-                index = 0
-            case "<EMPTY_LINE>":
-                # For now, an empty line is treated as a new line
-                # TODO: Other Markdown parsers use 4 spaces at end of line as new line, so this may be changed
-                final_ptr.write("<br>" + "\n")
-            case default:
-                # These are tags like headings where there's no other block elements after them
-                tag = get_html_tag(line_stripped)
-                if tag != line_stripped:
-                    html_line.insert(index, f"<{tag}>")
-                    index += 1
-                    html_line.insert(index, f"</{tag}>")      
-                else:
-                    html_line.insert(index, line_stripped)
-                    index += 1
+        if line.startswith("<UNORDERED_LIST") or line.startswith("<ORDERED_LIST"):
+            html_line.append(generate_list(temp_ptr, line_stripped))
+            index += 1
+        else:
+            match line_stripped:
+                case "<NEW_LINE>":
+                    # If new line is found outside of another condition (like list)
+                    # Then we're done, print the line and clear it
+                    final_ptr.write("".join(html_line) + "\n")
+                    html_line = []
+                    index = 0
+                case "<EMPTY_LINE>":
+                    # For now, an empty line is treated as a new line
+                    # TODO: Other Markdown parsers use 4 spaces at end of line as new line, so this may be changed
+                    final_ptr.write("<br>" + "\n")
+                case default:
+                    # These are tags like headings where there's no other block elements after them
+                    tag = get_html_tag(line_stripped)
+                    if tag != line_stripped:
+                        html_line.insert(index, f"<{tag}>")
+                        index += 1
+                        html_line.insert(index, f"</{tag}>")      
+                    else:
+                        html_line.insert(index, line_stripped)
+                        index += 1
 
         line = temp_ptr.readline()
 
@@ -59,7 +60,8 @@ def generate_html(temp_file_path: str) -> None:
 # TODO: Only does unordered now, need to do ordered
 # TODO: Need to account for potential other block elements within a list
 def generate_list(f: TextIO, line: str) -> str:
-    seen = [line]
+    line_parts = get_start_ol_num(line)
+    seen = [line_parts[0]]
     result = []
     index = 0
     new_list = True
@@ -69,7 +71,11 @@ def generate_list(f: TextIO, line: str) -> str:
         # Create a new outer list
         if new_list:
             tag = get_html_tag(line)
-            result.insert(index, f"<{tag}>")
+            line_parts = get_start_ol_num(line)
+            if line.startswith("<ORDERED_LIST"):
+                result.insert(index, f'<{tag} start="{line_parts[1]}">')
+            else:
+                result.insert(index, f"<{tag}>")
             index += 1
             result.insert(index, f"</{tag}>")
             new_list = False
@@ -85,24 +91,26 @@ def generate_list(f: TextIO, line: str) -> str:
             result.insert(index, f"</li>")
             index += 1
 
+            line_parts = get_start_ol_num(peek(f, 2)[0:-1])
             # Part of same list so just read to that token
-            if peek(f, 2) == f"{seen[-1]}\n":
+            if line_parts[0] == f"{seen[-1]}":
                 line = f.readline()
                 line = f.readline()
             # Still a list but different kind
-            elif peek(f, 2).startswith("<UNORDERED_LIST"):
+            elif line_parts[0].startswith("<UNORDERED_LIST") or line_parts[0].startswith("<ORDERED_LIST"):
                 # New list, set to create a new list
-                if peek(f, 2)[0:-1] not in seen:
-                    seen.append(peek(f, 2)[0:-1])
+                if line_parts[0] not in seen:
+                    seen.append(line_parts[0])
                     new_list = True
-                # Part of another list, so we need to advance index to that list
+                # Part of another list, so we need to move index to that list
                 else:
-                    seen_index = seen.index(peek(f, 2)[0:-1])
-                    skip = len(seen) - (seen_index + 1)
+                    seen_index = seen.index(line_parts[0])
+                    skip = seen_index
+                    index = len(result) - 1
                     while skip >= 0:
-                        index = result.index("</ul>", index)
-                        seen_index -= 1
-                        skip -= 1
+                        if result[index] == "</ul>" or result[index] == "</ol>":
+                            skip -= 1
+                        index -= 1
                     index += 1
                     del seen[seen_index+1:]
 
@@ -114,6 +122,23 @@ def generate_list(f: TextIO, line: str) -> str:
             done = True
 
     return "".join(result)
+
+# Helper function to get starting num of ordered list
+def get_start_ol_num(line: str) -> list[str]:
+    # Make sure tag is ordered list
+    if not line.startswith("<ORDERED_LIST"):
+        return [line]
+    
+    # Get rid of new line if present
+    if line.endswith('\n'):
+        line = line[0:-1]
+    
+    line_parts = line.split('_')
+    # Should be 4 parts (ORDERED, LIST, num, indent)
+    if len(line_parts) != 4:
+        return [line]
+
+    return [f'{line_parts[0]}_{line_parts[1]}_{line_parts[2]}>', line_parts[3][0:-1]]
 
 # Helper function to get matching HTML tag for intermediate tag
 def get_html_tag(line: str) -> str:
@@ -133,8 +158,10 @@ def get_html_tag(line: str) -> str:
         case "<TEXT>":
             return "p"
     
-    # Any nested list would still use <ul>
+    # Any nested list would still use <ul> or <ol>
     if line.startswith("<UNORDERED_LIST"):
         return "ul"
+    if line.startswith("<ORDERED_LIST"):
+        return "ol"
     
     return line
