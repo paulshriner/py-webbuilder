@@ -151,9 +151,12 @@ def parse_markdown_block(line: str) -> tuple[bool, str, str]:
             break
 
     # Check if line represents an unordered list
-    # TODO: Need to add nested lists
+    # NOTE: Num of indents really does not matter here, it just signifies we start a new list
     if stripped_line.startswith('- ') or stripped_line.startswith('* ') or stripped_line.startswith('+ '):
-        return (True, f"<UNORDERED_LIST>", stripped_line[2:])
+        if indents > 0:
+            return (True, f"<UNORDERED_LIST_{indents}>", stripped_line[2:])
+        
+        return (True, "<UNORDERED_LIST>", stripped_line[2:])
 
     # TODO: Implement more Markdown syntax
     return (False, "<TEXT>", line)
