@@ -41,13 +41,13 @@ def parse_content_file(file_path: str) -> dict:
             if cur_line[1] == "<CONFIG_END>":
                 in_config = False
             else:
-                config[cur_line[1]] = parse_config_line(cur_line[1], sanitize_line(cur_line[2][0:-1]))
+                config[cur_line[1]] = parse_line(cur_line[1], sanitize_line(cur_line[2][0:-1]))
             continue
 
         # Either we're done with config or user never added one, so proceed with standard markdown
         cur_line = parse_markdown_block(line)
         temp_file.write(cur_line[1] + '\n')
-        temp_file.write(sanitize_line(cur_line[2]))
+        temp_file.write(parse_line(cur_line[1], sanitize_line(cur_line[2])))
         temp_file.write("<NEW_LINE>\n")
 
     # Close files when done
@@ -86,10 +86,12 @@ def parse_config_block(line: str) -> tuple[bool, str, str]:
 # Currently it parses links using regex
 # TODO: Parse other elements
 # TODO: Different lines need to be handled differently (title line should not have markdown links)
-# TODO: This may get combined with an overall "parse_line" function
-def parse_config_line(token: str, line: str):
-    # Thanks https://regex101.com/r/6irz8e/2 for Markdown link regex
-    link_pattern = r'\[([^\]]+)\]\(([^)]+())\)'
+def parse_line(token: str, line: str):
+    # Thanks https://gist.github.com/elfefe/ef08e583e276e7617cd316ba2382fc40 for Markdown regexes
+    link_pattern = r'\[(.*?)\]\((.*?)\s?(?:"(.*?)")?\)'
+    # Only use astericks not underlines
+    bold_pattern = r'\*\*(.+?)\*\*'
+    italic_pattern = r'\*(.+?)\*'
     
     # Thanks https://www.geeksforgeeks.org/python/re-matchobject-group-function-in-python-regex/ for match group
     def convert_link(match):
@@ -97,6 +99,11 @@ def parse_config_line(token: str, line: str):
         link = match.group(1)
 
         return f'<a href="{preview}" target="_blank">{link}</a>'
+    
+    def convert_bold(match):
+        return f'<strong>{match.group(1)}</strong>'
+    def convert_italic(match):
+        return f'<em>{match.group(1)}</em>'
     
     # Navigation links should just be links, that's it
     parsed_line = line
@@ -107,6 +114,10 @@ def parse_config_line(token: str, line: str):
     elif token != "<CONFIG_HOME>":
         # Thanks https://www.geeksforgeeks.org/python/re-sub-python-regex/ for re.sub
         parsed_line = re.sub(link_pattern, convert_link, line)
+
+        # Convert bold and italic
+        parsed_line = re.sub(bold_pattern, convert_bold, parsed_line)
+        parsed_line = re.sub(italic_pattern, convert_italic, parsed_line)
 
     return parsed_line
 
