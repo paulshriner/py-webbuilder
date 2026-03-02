@@ -39,15 +39,8 @@ def generate_html(temp_file_path: str) -> None:
                     # TODO: Other Markdown parsers use 4 spaces at end of line as new line, so this may be changed
                     final_ptr.write("<br>" + "\n")
                 case default:
-                    # These are tags like headings where there's no other block elements after them
-                    tag = get_html_tag(line_stripped)
-                    if tag != line_stripped:
-                        html_line.insert(index, f"<{tag}>")
-                        index += 1
-                        html_line.insert(index, f"</{tag}>")      
-                    else:
-                        html_line.insert(index, line_stripped)
-                        index += 1
+                    final_ptr.write(generate_line(temp_ptr))
+                    index += 1
 
         # Read last line, peek at next line
         temp_ptr.readline()
@@ -56,6 +49,19 @@ def generate_html(temp_file_path: str) -> None:
     # Close files when done
     temp_ptr.close()
     final_ptr.close()
+
+# Generates HTML for a one line element like headings or text
+# File pointer will be one previous from content line
+def generate_line(f: TextIO) -> str:
+    # Get token, related tag, then read it in file
+    token = peek(f, 1).strip()
+    tag = get_html_tag(token)
+    f.readline()
+
+    # Get line, then read it in file
+    line = peek(f, 1).strip()
+
+    return f'<{tag}>{line}</{tag}>'
 
 # Generates the HTML for a list
 # Takes file pointer, start token, seen tokens
@@ -66,19 +72,23 @@ def generate_list(f: TextIO, start: str, seen: list = []) -> str:
 
     # Beginning tag of list
     items = []
+    tag = get_html_tag(start)
     if start.startswith("<ORDERED"):
         start_parts = get_start_ol_num(start)
-        items.append(f'<ol start="{start_parts[1]}">')
+        items.append(f'<{tag} start="{start_parts[1]}">')
     else:
-        items.append("<ul>")
+        items.append(f"<{tag}>")
 
-    while peek(f, 1).startswith("<UNORDERED") or peek(f, 1).startswith("<ORDERED") :
-        # Read the start line
-        f.readline()
+    continue_list = False
+    while peek(f, 1).startswith("<UNORDERED") or peek(f, 1).startswith("<ORDERED") or continue_list:
+        if not continue_list:
+            # Read the start line
+            f.readline()
 
-        # Peek at content line, add it as list item
-        line = peek(f, 1)[0:-1]
-        items.append(f'<li>{line}</li>')
+            # Peek at content line, add it as list item
+            line = peek(f, 1)[0:-1]
+            items.append(f'<li>{line}</li>')
+        continue_list = False
 
         # Check if we are still in a list
         test_token = peek(f, 3)[0:-1]
@@ -96,16 +106,26 @@ def generate_list(f: TextIO, start: str, seen: list = []) -> str:
                     break
                 else:
                     items.append(generate_list(f, test_token, seen))
+        elif test_token != "<EMPTY_LINE>":
+            # Get content for token
+            test_line = peek(f, 4)[0:-1]
+            # Use 4 spaces to determine if this line goes in list
+            if test_line.startswith("    "):
+                continue_list = True
+
+                # Read up to token then generate line for it
+                f.readline()
+                f.readline()
+                items.append(generate_line(f))
 
     # Ending tag of list
-    if start.startswith("<ORDERED"):
-        items.append("</ol>")
-    else:
-        items.append("</ul>")
+    tag = get_html_tag(start)
+    items.append(f"</{tag}>")
 
     return "".join(items)
 
 # Helper function to get starting num of ordered list
+# Can be used for other tokens, it will just return that token
 def get_start_ol_num(line: str) -> list[str]:
     # Get rid of new line if present
     if line.endswith('\n'):
