@@ -16,14 +16,14 @@ def generate_html(temp_file_path: str) -> None:
     temp_ptr = open(temp_file_path, 'r')
     final_ptr = open(f"../temp/{temp_file_name}.final", 'w')
 
-    line = temp_ptr.readline()
+    next_line = peek(temp_ptr, 1)
     html_line = []
     index = 0
     # TODO: Refactor this some more
-    while line:
-        line_stripped = line[0:-1]
+    while next_line:
+        line_stripped = next_line[0:-1]
 
-        if line.startswith("<UNORDERED_LIST") or line.startswith("<ORDERED_LIST"):
+        if next_line.startswith("<UNORDERED_LIST") or next_line.startswith("<ORDERED_LIST"):
             html_line.append(generate_list(temp_ptr, line_stripped))
             index += 1
         else:
@@ -49,89 +49,71 @@ def generate_html(temp_file_path: str) -> None:
                         html_line.insert(index, line_stripped)
                         index += 1
 
-        line = temp_ptr.readline()
+        # Read last line, peek at next line
+        temp_ptr.readline()
+        next_line = peek(temp_ptr, 1)
 
     # Close files when done
     temp_ptr.close()
     final_ptr.close()
 
 # Generates the HTML for a list
-# Takes a file pointer and current line (the intermediate token), returns string with HTML list
-# TODO: Only does unordered now, need to do ordered
+# Takes file pointer, start token, seen tokens
+# Returns string with HTML list
 # TODO: Need to account for potential other block elements within a list
-def generate_list(f: TextIO, line: str) -> str:
-    line_parts = get_start_ol_num(line)
-    seen = [line_parts[0]]
-    result = []
-    index = 0
-    new_list = True
-    done = False
+def generate_list(f: TextIO, start: str, seen: list = []) -> str:
+    seen.append(start)
 
-    while not done:
-        # Create a new outer list
-        if new_list:
-            tag = get_html_tag(line)
-            line_parts = get_start_ol_num(line)
-            if line.startswith("<ORDERED_LIST"):
-                result.insert(index, f'<{tag} start="{line_parts[1]}">')
-            else:
-                result.insert(index, f"<{tag}>")
-            index += 1
-            result.insert(index, f"</{tag}>")
-            new_list = False
+    # Beginning tag of list
+    items = []
+    if start.startswith("<ORDERED"):
+        start_parts = get_start_ol_num(start)
+        items.append(f'<ol start="{start_parts[1]}">')
+    else:
+        items.append("<ul>")
 
-        line = f.readline()
-        if line:
-            # Add element to list
-            line_stripped = line[0:-1]
-            result.insert(index, f"<li>")
-            index += 1
-            result.insert(index, line_stripped)
-            index += 1
-            result.insert(index, f"</li>")
-            index += 1
+    while peek(f, 1).startswith("<UNORDERED") or peek(f, 1).startswith("<ORDERED") :
+        # Read the start line
+        f.readline()
 
-            line_parts = get_start_ol_num(peek(f, 2)[0:-1])
-            # Part of same list so just read to that token
-            if line_parts[0] == f"{seen[-1]}":
-                line = f.readline()
-                line = f.readline()
-            # Still a list but different kind
-            elif line_parts[0].startswith("<UNORDERED_LIST") or line_parts[0].startswith("<ORDERED_LIST"):
-                # New list, set to create a new list
-                if line_parts[0] not in seen:
-                    seen.append(line_parts[0])
-                    new_list = True
-                # Part of another list, so we need to move index to that list
+        # Peek at content line, add it as list item
+        line = peek(f, 1)[0:-1]
+        items.append(f'<li>{line}</li>')
+
+        # Check if we are still in a list
+        test_token = peek(f, 3)[0:-1]
+        if test_token.startswith("<UNORDERED") or test_token.startswith("<ORDERED"):
+            # Read up to start line
+            f.readline()
+            f.readline()
+
+            line_parts = get_start_ol_num(test_token)
+            start_parts = get_start_ol_num(start)
+            if line_parts[0] != start_parts[0]:
+                # If we've already seen this element then we need to go back
+                # Else recurse to inner list
+                if line_parts[0] in seen:
+                    break
                 else:
-                    seen_index = seen.index(line_parts[0])
-                    skip = seen_index
-                    index = len(result) - 1
-                    while skip >= 0:
-                        if result[index] == "</ul>" or result[index] == "</ol>":
-                            skip -= 1
-                        index -= 1
-                    index += 1
-                    del seen[seen_index+1:]
+                    items.append(generate_list(f, test_token, seen))
 
-                line = f.readline()
-                line = f.readline()
-            else:
-                done = True
-        else:
-            done = True
+    # Ending tag of list
+    if start.startswith("<ORDERED"):
+        items.append("</ol>")
+    else:
+        items.append("</ul>")
 
-    return "".join(result)
+    return "".join(items)
 
 # Helper function to get starting num of ordered list
 def get_start_ol_num(line: str) -> list[str]:
-    # Make sure tag is ordered list
-    if not line.startswith("<ORDERED_LIST"):
-        return [line]
-    
     # Get rid of new line if present
     if line.endswith('\n'):
         line = line[0:-1]
+    
+    # Make sure tag is ordered list
+    if not line.startswith("<ORDERED_LIST"):
+        return [line]
     
     line_parts = line.split('_')
     # Should be 4 parts (ORDERED, LIST, num, indent)
