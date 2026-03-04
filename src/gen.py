@@ -19,6 +19,7 @@ def generate_html(temp_file_path: str) -> None:
     next_line = peek(temp_ptr, 1)
     html_line = []
     index = 0
+    in_code_block = False
     # TODO: Refactor this some more
     while next_line:
         line_stripped = next_line[0:-1]
@@ -28,6 +29,16 @@ def generate_html(temp_file_path: str) -> None:
             index += 1
         else:
             match line_stripped:
+                case "<CODE_BLOCK>":
+                    # If code block found, add code tag to final file then continue with other tokens
+                    # When second code block token is found that signals the end of the block
+                    if not in_code_block:
+                        final_ptr.write("<code>\n")
+                        in_code_block = True
+                    else:
+                        final_ptr.write("</code>\n")
+                        in_code_block = False
+                    temp_ptr.readline()
                 case "<NEW_LINE>":
                     # If new line is found outside of another condition (like list)
                     # Then we're done, print the line and clear it
@@ -37,14 +48,19 @@ def generate_html(temp_file_path: str) -> None:
                 case "<EMPTY_LINE>":
                     # For now, an empty line is treated as a new line
                     # TODO: Other Markdown parsers use 4 spaces at end of line as new line, so this may be changed
-                    final_ptr.write("<br>" + "\n")
+                    html_line.append("<br>" + "\n")
+                    index += 1
                 case default:
-                    final_ptr.write(generate_line(temp_ptr))
+                    html_line.append(generate_line(temp_ptr))
                     index += 1
 
         # Read last line, peek at next line
         temp_ptr.readline()
         next_line = peek(temp_ptr, 1)
+
+    # Make sure code tag is closed if input file did not have closing code token
+    if in_code_block:
+        final_ptr.write("</code>\n")
 
     # Close files when done
     temp_ptr.close()

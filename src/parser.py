@@ -92,6 +92,8 @@ def parse_line(token: str, line: str):
     # Only use astericks not underlines
     bold_pattern = r'\*\*(.+?)\*\*'
     italic_pattern = r'\*(.+?)\*'
+    inline_code_pattern = r'`(.+?)`'
+    escape_code_pattern = r'``(.+?)``'
     
     # Thanks https://www.geeksforgeeks.org/python/re-matchobject-group-function-in-python-regex/ for match group
     def convert_link(match):
@@ -104,6 +106,10 @@ def parse_line(token: str, line: str):
         return f'<strong>{match.group(1)}</strong>'
     def convert_italic(match):
         return f'<em>{match.group(1)}</em>'
+    def convert_escape_code(match):
+        return match.group(1).replace('`', '&#96;')
+    def convert_inline_code(match):
+        return f'<code>{match.group(1)}</code>'
     
     # Navigation links should just be links, that's it
     parsed_line = line
@@ -118,6 +124,9 @@ def parse_line(token: str, line: str):
         # Convert bold and italic
         parsed_line = re.sub(bold_pattern, convert_bold, parsed_line)
         parsed_line = re.sub(italic_pattern, convert_italic, parsed_line)
+        # Convert code lines
+        parsed_line = re.sub(escape_code_pattern, convert_escape_code, parsed_line)
+        parsed_line = re.sub(inline_code_pattern, convert_inline_code, parsed_line)
 
     return parsed_line
 
@@ -132,6 +141,10 @@ def parse_markdown_block(line: str) -> tuple[bool, str, str]:
     # Nothing in line or user skipped lines
     if not line or line == "\n":
         return (True, "<EMPTY_LINE>", "")
+    
+    # Fenced code block
+    if line == "```\n":
+        return (True, "<CODE_BLOCK>", "")
     
     # Consume starting spaces
     indents = 0
