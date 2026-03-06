@@ -5,7 +5,7 @@
     file: Contains file related functionality
 '''
 
-import os
+import os, shutil
 from typing import TextIO
 
 # Takes in a file path
@@ -40,3 +40,16 @@ def peek(f: TextIO, lines: int) -> str:
     f.seek(pos)
 
     return line
+
+# Returns if a file exists at a given path
+def file_exists(file_path: str) -> bool:
+    return os.path.exists(file_path)
+
+# Removes an entire directory
+# WARNING: All content in directory will be lost!
+# If directory not found this will do nothing
+def remove_dir(dir_path) -> None:
+    try:
+        shutil.rmtree(dir_path)
+    except FileNotFoundError:
+        pass
