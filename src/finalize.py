@@ -8,14 +8,14 @@
 import shutil
 from file import get_file_name, create_dir
 
-def create_html(theme: str, global_config: dict, page_config: dict, final_file_path: str) -> None:
+def create_html(theme: str, global_config: dict, page_config: dict, final_file_path: str, output_dir: str) -> None:
     # Create output dir if needed
-    create_dir("output")
+    create_dir(output_dir)
 
     # Get name to use for output file
     output_file_name = get_file_name(final_file_path)[0]
     # Copy template file from theme to output dir, thanks https://stackoverflow.com/a/123212 
-    shutil.copyfile(f'{theme}/templates/base.html', f"../output/{output_file_name}.html")
+    shutil.copyfile(f'{theme}/templates/base.html', f"../{output_dir}/{output_file_name}.html")
 
     final_file = open(f"{final_file_path}", 'r')
 
@@ -23,7 +23,7 @@ def create_html(theme: str, global_config: dict, page_config: dict, final_file_p
     # Will replace portions in html file with our content
     # TODO: Need to do all places in HTML
     # TODO: CONFIG_HOME should be a link to index.html
-    with open(f"../output/{output_file_name}.html", 'r') as output_file:
+    with open(f"../{output_dir}/{output_file_name}.html", 'r') as output_file:
         # Replace content with associated data for this page
         data = output_file.read()
         data = data.replace("{{CONTENT}}", final_file.read())
@@ -39,7 +39,7 @@ def create_html(theme: str, global_config: dict, page_config: dict, final_file_p
             if key == "<CONFIG_FOOTER>":
                 data = data.replace("{{FOOTER_INFO}}", val)
 
-    with open(f"../output/{output_file_name}.html", 'w') as output_file:
+    with open(f"../{output_dir}/{output_file_name}.html", 'w') as output_file:
         output_file.write(data)
     
     final_file.close()

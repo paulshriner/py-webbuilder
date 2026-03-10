@@ -28,6 +28,21 @@ def create_dir(name: str) -> None:
     except FileExistsError:
         pass
 
+# Return list of all files inside a directory
+# Thanks https://www.geeksforgeeks.org/python/python-loop-through-folders-and-files-in-directory/
+# If dir doesn't exist this will return an empty list
+def get_all_dir_files(dir: str) -> list:
+    files = []
+    
+    try:
+        for e in os.scandir(dir):
+            if e.is_file():
+                files.append(e.name)
+    except FileNotFoundError:
+        pass
+    
+    return files
+
 # Return a line without advancing the file pointer (file peek)
 # Specify number of lines to skip using lines
 # Thanks https://stackoverflow.com/a/16840747 for file peeking
