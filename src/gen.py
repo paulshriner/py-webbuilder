@@ -83,7 +83,7 @@ def generate_line(f: TextIO) -> str:
 # Takes file pointer, start token, seen tokens
 # Returns string with HTML list
 # TODO: Need to account for potential other block elements within a list
-def generate_list(f: TextIO, start: str, seen: list = []) -> str:
+def generate_list(f: TextIO, start: str, seen: list[str] = []) -> str:
     seen.append(start)
 
     # Beginning tag of list

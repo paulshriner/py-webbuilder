@@ -31,7 +31,7 @@ def create_dir(name: str) -> None:
 # Return list of all files inside a directory
 # Thanks https://www.geeksforgeeks.org/python/python-loop-through-folders-and-files-in-directory/
 # If dir doesn't exist this will return an empty list
-def get_all_dir_files(dir: str) -> list:
+def get_all_dir_files(dir: str) -> list[str]:
     files = []
     
     try:
@@ -63,7 +63,7 @@ def file_exists(file_path: str) -> bool:
 # Removes an entire directory
 # WARNING: All content in directory will be lost!
 # If directory not found this will do nothing
-def remove_dir(dir_path) -> None:
+def remove_dir(dir_path: str) -> None:
     try:
         shutil.rmtree(dir_path)
     except FileNotFoundError:

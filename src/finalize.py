@@ -8,7 +8,7 @@
 import shutil
 from file import get_file_name, create_dir
 
-def create_html(theme: str, global_config: dict, page_config: dict, final_file_path: str, output_dir: str) -> None:
+def create_html(theme: str, global_config: dict[str, str], page_config: dict[str, str], final_file_path: str, output_dir: str) -> None:
     # Create output dir if needed
     create_dir(output_dir)
 

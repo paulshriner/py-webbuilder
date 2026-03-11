@@ -11,7 +11,7 @@ from parser import parse_content_file
 from gen import generate_html
 from finalize import create_html
 
-def main():
+def main() -> None:
     clear_all()
     
     # Get global config vars from global.md (if there's content it will be ignored)
@@ -37,10 +37,11 @@ def main():
 
     # Generate HTML for each post
     for post in posts:
-        file_name = get_file_name(post)[0]
-        page_config = parse_content_file(f'../input/posts/{post}')
-        generate_html(f'../temp/{file_name}.tmp')
-        create_html('../themes/default', global_config, page_config, f'../temp/{file_name}.final', 'output/posts')
+        file_name, file_ext = get_file_name(post)
+        if file_ext == ".md":
+            page_config = parse_content_file(f'../input/posts/{post}')
+            generate_html(f'../temp/{file_name}.tmp')
+            create_html('../themes/default', global_config, page_config, f'../temp/{file_name}.final', 'output/posts')
 
 
 if __name__ == "__main__":

@@ -86,7 +86,7 @@ def parse_config_block(line: str) -> tuple[bool, str, str]:
 # Currently it parses links using regex
 # TODO: Parse other elements
 # TODO: Different lines need to be handled differently (title line should not have markdown links)
-def parse_line(token: str, line: str):
+def parse_line(token: str, line: str) -> str:
     # Thanks https://gist.github.com/elfefe/ef08e583e276e7617cd316ba2382fc40 for Markdown regexes
     link_pattern = r'\[(.*?)\]\((.*?)\s?(?:"(.*?)")?\)'
     # Only use astericks not underlines
@@ -115,7 +115,10 @@ def parse_line(token: str, line: str):
     parsed_line = line
     if token == "<CONFIG_NAV_LINKS>":
         matches = re.findall(link_pattern, line)
-        parsed_line = [f'<a href="{i[1]}" target="_blank">{i[0]}</a>' for i in matches]
+
+        parsed_line = ""
+        for i in matches:
+            parsed_line += f'<a href="{i[1]}" target="_blank">{i[0]}</a>'
     # Anything else can be text and links, except the home link which is just text (link is always the home page)
     elif token != "<CONFIG_HOME>":
         # Thanks https://www.geeksforgeeks.org/python/re-sub-python-regex/ for re.sub
