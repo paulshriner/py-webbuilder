@@ -39,6 +39,13 @@ def create_html(theme: str, global_config: dict[str, str], page_config: dict[str
             if key == "<CONFIG_FOOTER>":
                 data = data.replace("{{FOOTER_INFO}}", val)
 
+        # Replace values for page config
+        for key, val in page_config.items():
+            if key == "<CONFIG_CSS_PATH>":
+                data = data.replace("{{CSS_PATH}}", val)
+            if key == "<CONFIG_TITLE>":
+                data = data.replace("{{TITLE}}", val)
+
     with open(f"../{output_dir}/{output_file_name}.html", 'w') as output_file:
         output_file.write(data)
     

@@ -64,7 +64,15 @@ def create_post() -> None:
     create_dir("input/posts")
 
     # Create new post file
-    input_file = open(f"../input/posts/{datetime.datetime.now()}.md", 'w')
+    file_name = datetime.datetime.now()
+    input_file = open(f"../input/posts/{file_name}.md", 'w')
+
+    # Create config section
+    input_file.write("{\n")
+    input_file.write(f"Title: {file_name}\n")
+    input_file.write("}\n")
+
+    # Create post content
     for line in DEFAULT_POST:
         input_file.write(f"{line}\n")
 

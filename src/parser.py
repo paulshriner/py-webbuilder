@@ -78,6 +78,9 @@ def parse_config_block(line: str) -> tuple[bool, str, str]:
     # Footer information
     if parts[0] == "Footer":
         return (False, "<CONFIG_FOOTER>", parts[1])
+    # Page title
+    if parts[0] == "Title":
+        return (False, "<CONFIG_TITLE>", parts[1])
     
     # TODO: Rest of config entries
     return (False, "<ERROR>", line)
@@ -120,7 +123,7 @@ def parse_line(token: str, line: str) -> str:
         for i in matches:
             parsed_line += f'<a href="{i[1]}" target="_blank">{i[0]}</a>'
     # Anything else can be text and links, except the home link which is just text (link is always the home page)
-    elif token != "<CONFIG_HOME>":
+    elif token != "<CONFIG_HOME>" and token != "<CONFIG_TITLE>":
         # Thanks https://www.geeksforgeeks.org/python/re-sub-python-regex/ for re.sub
         parsed_line = re.sub(link_pattern, convert_link, line)
 

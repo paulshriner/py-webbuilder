@@ -28,6 +28,12 @@ def create_dir(name: str) -> None:
     except FileExistsError:
         pass
 
+# Copies a directory to another location
+# WARNING: Will overwrite existing directory
+def copy_dir(source: str, dest: str) -> None:
+    # Thanks https://stackoverflow.com/a/31039095 for copytree
+    shutil.copytree(source, dest, dirs_exist_ok=True)
+
 # Return list of all files inside a directory
 # Thanks https://www.geeksforgeeks.org/python/python-loop-through-folders-and-files-in-directory/
 # If dir doesn't exist this will return an empty list
