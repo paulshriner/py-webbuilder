@@ -121,7 +121,7 @@ def parse_line(token: str, line: str) -> str:
 
         parsed_line = ""
         for i in matches:
-            parsed_line += f'<a href="{i[1]}" target="_blank">{i[0]}</a>'
+            parsed_line += f'<li><a href="{i[1]}" target="_blank">{i[0]}</a></li>'
     # Anything else can be text and links, except the home link which is just text (link is always the home page)
     elif token != "<CONFIG_HOME>" and token != "<CONFIG_TITLE>":
         # Thanks https://www.geeksforgeeks.org/python/re-sub-python-regex/ for re.sub

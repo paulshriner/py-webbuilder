@@ -1,0 +1,30 @@
+* {
+    /* Reset box model */
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+#navbar a {
+    /* Remove underlines from links in nav bar */
+    text-decoration: none;
+}
+
+#navbar ul {
+    /* Use flexbox with links spaced evenly */
+    list-style-type: none;
+    display: flex;
+    justify-content: space-evenly;
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+#navbar a {
+    color: black;
+    transition: 0.5s;
+}
+
+#navbar a:hover {
+    color: gray;
+    transition: 0.5s;
+}
