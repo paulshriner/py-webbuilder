@@ -7,19 +7,24 @@
     <title>{{TITLE}}</title>
 </head>
 <body>
-    <header>
-        <nav id="navbar">
-            <ul>
-                <li><a href="{{NAV_TITLE_LINK}}">{{NAV_TITLE}}</a></li>
-                {{NAV_LINKS}}
-            </ul>
-        </nav>
-    </header>
-    <main>
-        {{CONTENT}}
-    </main>
-    <footer>
-        {{FOOTER_INFO}}
-    </footer>
+    <!-- Thanks https://www.freecodecamp.org/news/how-to-keep-your-footer-where-it-belongs-59c6aa05c59c/ for keeping footer at bottom -->
+    <div id="page-container">
+        <div id="content-wrap">
+            <header>
+                <nav id="navbar">
+                    <ul>
+                        <li><a href="{{NAV_TITLE_LINK}}">{{NAV_TITLE}}</a></li>
+                        {{NAV_LINKS}}
+                    </ul>
+                </nav>
+            </header>
+            <main>
+                {{CONTENT}}
+            </main>
+        </div>
+        <footer id="footer">
+            {{FOOTER_INFO}}
+        </footer>
+    </div>
 </body>
 </html>
