@@ -165,6 +165,12 @@ def parse_markdown_block(line: str) -> tuple[bool, str, str]:
 
     # Remove beginning spaces from line
     stripped_line = line[start_line:]
+
+    # Check for horizontal rule
+    hr_patterns = [r'^-{3,}$', r'^\*{3,}$', r'^_{3,}$']
+    for r in hr_patterns:
+        if re.search(r, stripped_line[0:-1]):
+            return (True, "<HORIZONTAL_RULE>", "")
     
     # Check if line represents a heading
     # If we find one #, keep count until space found

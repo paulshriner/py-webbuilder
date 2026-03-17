@@ -39,6 +39,9 @@ def generate_html(temp_file_path: str) -> None:
                         final_ptr.write("</code>\n")
                         in_code_block = False
                     temp_ptr.readline()
+                case "<HORIZONTAL_RULE>":
+                    html_line.append("<hr>\n")
+                    index += 1
                 case "<NEW_LINE>":
                     # If new line is found outside of another condition (like list)
                     # Then we're done, print the line and clear it
@@ -48,7 +51,7 @@ def generate_html(temp_file_path: str) -> None:
                 case "<EMPTY_LINE>":
                     # For now, an empty line is treated as a new line
                     # TODO: Other Markdown parsers use 4 spaces at end of line as new line, so this may be changed
-                    html_line.append("<br>" + "\n")
+                    html_line.append("<br>\n")
                     index += 1
                 case default:
                     html_line.append(generate_line(temp_ptr))
