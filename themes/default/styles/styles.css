@@ -51,6 +51,11 @@ main {
     margin: 0 auto;
 }
 
+main ul, main ol {
+    /* Indent lists so they are visually nested */
+    padding-left: 40px;
+}
+
 /* Increase width of content if screen is small */
 @media screen and (max-width: 1000px) {
     main {

@@ -85,15 +85,14 @@ def generate_line(f: TextIO) -> str:
 # Generates the HTML for a list
 # Takes file pointer, start token, seen tokens
 # Returns string with HTML list
-# TODO: Need to account for potential other block elements within a list
 def generate_list(f: TextIO, start: str, seen: list[str] = []) -> str:
-    seen.append(start)
+    start_parts = get_start_ol_num(start)
+    seen.append(start_parts[0])
 
     # Beginning tag of list
     items = []
     tag = get_html_tag(start)
     if start.startswith("<ORDERED"):
-        start_parts = get_start_ol_num(start)
         items.append(f'<{tag} start="{start_parts[1]}">')
     else:
         items.append(f"<{tag}>")
@@ -105,8 +104,19 @@ def generate_list(f: TextIO, start: str, seen: list[str] = []) -> str:
             f.readline()
 
             # Peek at content line, add it as list item
+            # TODO: This only considers one block element, may need to be changed
             line = peek(f, 1)[0:-1]
-            items.append(f'<li>{line}</li>')
+            tag = get_html_tag(line)
+            items.append("<li>")
+            if line != tag:
+                items.append(f"<{tag}>")
+                f.readline()
+                line = peek(f, 1)[0:-1]
+                items.append(line)
+                items.append(f"</{tag}>")
+            else:
+                items.append(line)
+            items.append("</li>")
         continue_list = False
 
         # Check if we are still in a list
@@ -117,7 +127,6 @@ def generate_list(f: TextIO, start: str, seen: list[str] = []) -> str:
             f.readline()
 
             line_parts = get_start_ol_num(test_token)
-            start_parts = get_start_ol_num(start)
             if line_parts[0] != start_parts[0]:
                 # If we've already seen this element then we need to go back
                 # Else recurse to inner list

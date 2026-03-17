@@ -41,13 +41,20 @@ def parse_content_file(file_path: str) -> dict:
             if cur_line[1] == "<CONFIG_END>":
                 in_config = False
             else:
-                config[cur_line[1]] = parse_line(cur_line[1], sanitize_line(cur_line[2][0:-1]))
+                if not cur_line[0]:
+                    config[cur_line[1]] = parse_line(cur_line[1], sanitize_line(cur_line[2][0:-1]))
+                else:
+                    config[cur_line[1]] = sanitize_line(cur_line[2][0:-1])
             continue
 
         # Either we're done with config or user never added one, so proceed with standard markdown
         cur_line = parse_markdown_block(line)
-        temp_file.write(cur_line[1] + '\n')
-        temp_file.write(parse_line(cur_line[1], sanitize_line(cur_line[2])))
+        while not cur_line[0]:
+            temp_file.write(cur_line[1] + '\n')
+            cur_line = parse_markdown_block(cur_line[2])
+        else:
+            temp_file.write(cur_line[1] + '\n')
+            temp_file.write(parse_line(cur_line[1], sanitize_line(cur_line[2])))
         temp_file.write("<NEW_LINE>\n")
 
     # Close files when done
@@ -182,14 +189,14 @@ def parse_markdown_block(line: str) -> tuple[bool, str, str]:
             if heading_len > 6:
                 break
         elif i == ' ' and heading_len >= 0:
-            return (True, f"<HEADING_{heading_len}>", stripped_line[heading_len+1:])
+            return (True, f"<HEADING_{heading_len}>", f'{'    ' * indents}{stripped_line[heading_len+1:]}')
         else:
             break
 
     # Check if line represents an unordered list
     # NOTE: Num of indents really does not matter here, it just signifies we start a new list
     if stripped_line.startswith('- ') or stripped_line.startswith('* ') or stripped_line.startswith('+ '):
-        return (True, f"<UNORDERED_LIST_{indents}>", stripped_line[2:])
+        return (False, f"<UNORDERED_LIST_{indents}>", stripped_line[2:])
     
     # Check if line represents an ordered list
     list_num = ""
@@ -197,12 +204,12 @@ def parse_markdown_block(line: str) -> tuple[bool, str, str]:
         if stripped_line[i].isdigit():
             list_num = stripped_line[0:i+1]
         elif list_num and stripped_line[i] == '.' and stripped_line[i + 1] == ' ':
-            return (True, f"<ORDERED_LIST_{indents}_{list_num}>", stripped_line[i + 2:])
+            return (False, f"<ORDERED_LIST_{indents}_{list_num}>", stripped_line[i + 2:])
         else:
             break
 
     # TODO: Implement more Markdown syntax
-    return (False, "<TEXT>", line)
+    return (True, "<TEXT>", line)
 
 # Sanitize a line to prevent HTML being rendered
 # Meant to be run before appending to file
