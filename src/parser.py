@@ -123,6 +123,11 @@ def parse_line(token: str, line: str) -> str:
     italic_pattern = r'\*(.+?)\*'
     inline_code_pattern = r'`(.+?)`'
     escape_code_pattern = r'``(.+?)``'
+
+    # Hold inline code sections
+    code_lines = []
+    # NOTE: If the user entered this exact phrase it could cause issues. We will just assume the user won't do this as it's a very specific phrase.
+    code_placeholder = "{{CODE_LINE_NUM}}"
     
     # Thanks https://www.geeksforgeeks.org/python/re-matchobject-group-function-in-python-regex/ for match group
     def convert_link(match):
@@ -138,7 +143,8 @@ def parse_line(token: str, line: str) -> str:
     def convert_escape_code(match):
         return match.group(1).replace('`', '&#96;')
     def convert_inline_code(match):
-        return f'<code>{match.group(1)}</code>'
+        code_lines.append(match.group(1))
+        return code_placeholder.replace("NUM", str(len(code_lines) - 1))
     
     # Navigation links should just be links, that's it
     parsed_line = line
@@ -150,16 +156,21 @@ def parse_line(token: str, line: str) -> str:
             parsed_line += f'<li><a href="{i[1]}" target="_blank">{i[0]}</a></li>'
     # Anything else can be text and links, except the home link which is just text (link is always the home page)
     elif token != "<CONFIG_HOME>" and token != "<CONFIG_TITLE>":
+        # Convert code lines
+        # Inline code will be stored as placeholders so inner elements do not get parsed
+        parsed_line = re.sub(escape_code_pattern, convert_escape_code, parsed_line)
+        parsed_line = re.sub(inline_code_pattern, convert_inline_code, parsed_line)
+        
         # Thanks https://www.geeksforgeeks.org/python/re-sub-python-regex/ for re.sub
-        parsed_line = re.sub(link_pattern, convert_link, line)
+        parsed_line = re.sub(link_pattern, convert_link, parsed_line)
 
         # Convert bold and italic
         parsed_line = re.sub(bold_pattern, convert_bold, parsed_line)
         parsed_line = re.sub(italic_pattern, convert_italic, parsed_line)
-        # Convert code lines
-        # TODO: Other elements should not be parsed in inline code
-        parsed_line = re.sub(escape_code_pattern, convert_escape_code, parsed_line)
-        parsed_line = re.sub(inline_code_pattern, convert_inline_code, parsed_line)
+
+    # Replace code line placeholders with actual text
+    for i, val in enumerate(code_lines):
+        parsed_line = parsed_line.replace(code_placeholder.replace("NUM", str(i)), f'<code>{val}</code>')
 
     return parsed_line
 
