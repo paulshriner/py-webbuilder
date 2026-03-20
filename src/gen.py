@@ -49,8 +49,7 @@ def generate_html(temp_file_path: str) -> None:
                     html_line = []
                     index = 0
                 case "<EMPTY_LINE>":
-                    # For now, an empty line is treated as a new line
-                    # TODO: Other Markdown parsers use 4 spaces at end of line as new line, so this may be changed
+                    # An empty line is treated as a new line, this is intentional
                     html_line.append("<br>\n")
                     index += 1
                 case default:

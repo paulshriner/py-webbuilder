@@ -25,6 +25,7 @@ def parse_content_file(file_path: str) -> dict:
     # Keep track of if we're in config, as these need to be handled separately
     in_file = False
     in_config = False
+    in_code_block = False
     for line in input_file:
         # See if we're in config
         if not in_file:
@@ -49,10 +50,29 @@ def parse_content_file(file_path: str) -> dict:
 
         # Either we're done with config or user never added one, so proceed with standard markdown
         cur_line = parse_markdown_block(line)
+        # If in a code block, add code block tag then set in code block flag
+        if cur_line[1] == "<CODE_BLOCK>":
+            in_code_block = not in_code_block
+            temp_file.write(cur_line[1] + '\n')
+            temp_file.write("<NEW_LINE>\n")
+            continue
+
+        # While in a code block, do not parse any text, just sanitize as is
+        if in_code_block:
+            if cur_line[1] == "<EMPTY_LINE>":
+                temp_file.write(cur_line[1] + '\n')
+            else:
+                temp_file.write("<TEXT>\n")
+                temp_file.write(sanitize_line(line))
+            temp_file.write("<NEW_LINE>\n")
+            continue
+        
         while not cur_line[0]:
+            # Need to reprocess for more block elements, such as a heading in a list
             temp_file.write(cur_line[1] + '\n')
             cur_line = parse_markdown_block(cur_line[2])
         else:
+            # Done with block elements, parse inline elements
             temp_file.write(cur_line[1] + '\n')
             temp_file.write(parse_line(cur_line[1], sanitize_line(cur_line[2])))
         temp_file.write("<NEW_LINE>\n")
@@ -95,7 +115,6 @@ def parse_config_block(line: str) -> tuple[bool, str, str]:
 # Parses elements within config line
 # Currently it parses links using regex
 # TODO: Parse other elements
-# TODO: Different lines need to be handled differently (title line should not have markdown links)
 def parse_line(token: str, line: str) -> str:
     # Thanks https://gist.github.com/elfefe/ef08e583e276e7617cd316ba2382fc40 for Markdown regexes
     link_pattern = r'\[(.*?)\]\((.*?)\s?(?:"(.*?)")?\)'
@@ -138,6 +157,7 @@ def parse_line(token: str, line: str) -> str:
         parsed_line = re.sub(bold_pattern, convert_bold, parsed_line)
         parsed_line = re.sub(italic_pattern, convert_italic, parsed_line)
         # Convert code lines
+        # TODO: Other elements should not be parsed in inline code
         parsed_line = re.sub(escape_code_pattern, convert_escape_code, parsed_line)
         parsed_line = re.sub(inline_code_pattern, convert_inline_code, parsed_line)
 
@@ -213,6 +233,7 @@ def parse_markdown_block(line: str) -> tuple[bool, str, str]:
 
 # Sanitize a line to prevent HTML being rendered
 # Meant to be run before appending to file
+# Thanks https://www.w3schools.com/html/html_entities.asp for list of character entities
 # TODO: Convert other character entities to be safe 
 def sanitize_line(line: str) -> str:
-    return line.replace('<', '&lt;').replace('>', '&gt;')
+    return line.replace('<', '&lt;').replace('>', '&gt;').replace("'", '&apos;').replace('"', '&quot;')

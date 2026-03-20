@@ -21,8 +21,6 @@ def create_html(theme: str, global_config: dict[str, str], page_config: dict[str
 
     # Thanks https://www.geeksforgeeks.org/python/how-to-search-and-replace-text-in-a-file-in-python/ for reading and writing to portion of file
     # Will replace portions in html file with our content
-    # TODO: Need to do all places in HTML
-    # TODO: CONFIG_HOME should be a link to index.html
     with open(f"../{output_dir}/{output_file_name}.html", 'r') as output_file:
         # Replace content with associated data for this page
         data = output_file.read()
