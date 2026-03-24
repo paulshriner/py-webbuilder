@@ -5,43 +5,62 @@
     file: Contains file related functionality
 '''
 
-import os, shutil
+from shutil import copytree, rmtree
 from typing import TextIO
+from pathlib import Path
+
+# Helper function that returns the directory to work from
+# NOTE: This will throw an exception for path traversals like '../../'.
+# This is normal, you should use a path like 'input/index.md' with the assumption you are one dir above src
+def get_working_dir(dir_path: str) -> Path:
+    # Get parent dir (this would be the project folder)
+    # Thanks https://docs.python.org/3/library/pathlib.html for pathlib documentation
+    parent_dir = Path.cwd().parent
+
+    # Create the path to dir_path
+    full_path = (parent_dir / dir_path).resolve()
+    # Make sure we did not go above project folder
+    try:
+        full_path.relative_to(parent_dir)
+    except ValueError:
+        raise ValueError(f'Path traversal found: {dir_path}')
+
+    return full_path
+
+# Takes in a file path
+# This should be a relative path, like "input/index.md", starting from the repo root
+# Returns True if file exists, False if not
+def file_exists(path: str) -> bool:
+    return get_working_dir(path).exists()
 
 # Takes in a file path
 # Returns a tuple of format (filename, ext)
-def get_file_name(file_path: str) -> tuple[str, str]:
-    # Use rfind to get last slash in directory
-    # If it's -1 then whole name would be used
-    slash_index = file_path.rfind('/')
-    file_name = file_path[slash_index+1:]
-    
-    # Split filename and file extension, thanks https://stackoverflow.com/a/541394
-    return os.path.splitext(file_name)
+def get_file_name(path: str) -> tuple[str, str]:
+    # Don't need to check for invalid dirs as that doesn't matter, we just want the filename
+    p = Path(path)
+    return (p.stem, p.suffix)
 
-# Takes in a dir name
-# Will create from root dir
+# Takes in a path starting from root to a dir, like "output/posts"
 # If dir already exists this does nothing
 def create_dir(name: str) -> None:
-    try:
-        os.mkdir(f'../{name}')
-    except FileExistsError:
-        pass
+    get_working_dir(name).mkdir(parents=True, exist_ok=True)
 
 # Copies a directory to another location
 # WARNING: Will overwrite existing directory
+# Will throw exception if source does not exist
 def copy_dir(source: str, dest: str) -> None:
     # Thanks https://stackoverflow.com/a/31039095 for copytree
-    shutil.copytree(source, dest, dirs_exist_ok=True)
+    copytree(get_working_dir(source), get_working_dir(dest), dirs_exist_ok=True)
 
 # Return list of all files inside a directory
-# Thanks https://www.geeksforgeeks.org/python/python-loop-through-folders-and-files-in-directory/
 # If dir doesn't exist this will return an empty list
 def get_all_dir_files(dir: str) -> list[str]:
     files = []
     
     try:
-        for e in os.scandir(dir):
+        # Append every file in dir to files list
+        # This will not go into subdirectories
+        for e in get_working_dir(dir).iterdir():
             if e.is_file():
                 files.append(e.name)
     except FileNotFoundError:
@@ -62,15 +81,11 @@ def peek(f: TextIO, lines: int) -> str:
 
     return line
 
-# Returns if a file exists at a given path
-def file_exists(file_path: str) -> bool:
-    return os.path.exists(file_path)
-
 # Removes an entire directory
 # WARNING: All content in directory will be lost!
 # If directory not found this will do nothing
 def remove_dir(dir_path: str) -> None:
     try:
-        shutil.rmtree(dir_path)
+        rmtree(get_working_dir(dir_path))
     except FileNotFoundError:
         pass

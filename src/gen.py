@@ -13,7 +13,7 @@ def generate_html(temp_file_path: str) -> None:
     # Get name to use for temp file
     temp_file_name = get_file_name(temp_file_path)[0]
 
-    temp_ptr = open(temp_file_path, 'r')
+    temp_ptr = open(f'../{temp_file_path}', 'r')
     final_ptr = open(f"../temp/{temp_file_name}.final", 'w')
 
     next_line = peek(temp_ptr, 1)

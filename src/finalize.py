@@ -15,9 +15,9 @@ def create_html(theme: str, global_config: dict[str, str], page_config: dict[str
     # Get name to use for output file
     output_file_name = get_file_name(final_file_path)[0]
     # Copy template file from theme to output dir, thanks https://stackoverflow.com/a/123212 
-    shutil.copyfile(f'{theme}/templates/base.html', f"../{output_dir}/{output_file_name}.html")
+    shutil.copyfile(f'../{theme}/templates/base.html', f"../{output_dir}/{output_file_name}.html")
 
-    final_file = open(f"{final_file_path}", 'r')
+    final_file = open(f"../{final_file_path}", 'r')
 
     # Thanks https://www.geeksforgeeks.org/python/how-to-search-and-replace-text-in-a-file-in-python/ for reading and writing to portion of file
     # Will replace portions in html file with our content

@@ -19,8 +19,7 @@ def parse_content_file(file_path: str) -> dict:
 
     # Create temp dir if needed
     create_dir("temp")
-
-    input_file = open(f"{file_path}", 'r')
+    input_file = open(f"../{file_path}", 'r')
     temp_file = open(f"../temp/{file_name}.tmp", 'w')
     # Keep track of if we're in config, as these need to be handled separately
     in_file = False

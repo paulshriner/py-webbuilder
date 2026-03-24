@@ -216,6 +216,6 @@ def create_post() -> None:
 # Default behavior is not to clear input unless True is passed for input
 def clear_all(input: bool = False) -> None:
     if input:
-        remove_dir("../input")
-    remove_dir("../output")
-    remove_dir("../temp")
+        remove_dir("input")
+    remove_dir("output")
+    remove_dir("temp")
