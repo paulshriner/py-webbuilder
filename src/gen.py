@@ -5,16 +5,17 @@
     gen: Converts intermediate code into final code
 '''
 
-from file import get_file_name, peek
 from typing import TextIO
+from pathlib import Path
+from file import get_file_name, peek
 
 # Generates HTML code from a parsed intermediate file
 def generate_html(temp_file_path: str) -> None:
     # Get name to use for temp file
     temp_file_name = get_file_name(temp_file_path)[0]
 
-    temp_ptr = open(f'../{temp_file_path}', 'r')
-    final_ptr = open(f"../temp/{temp_file_name}.final", 'w')
+    temp_ptr = open(Path(f"../{temp_file_path}"), 'r')
+    final_ptr = open(Path(f"../temp") / f"{temp_file_name}.final", 'w')
 
     next_line = peek(temp_ptr, 1)
     html_line = []

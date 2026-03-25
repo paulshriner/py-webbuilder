@@ -6,6 +6,7 @@
 '''
 
 import shutil
+from pathlib import Path
 from file import get_file_name, create_dir
 
 def create_html(theme: str, global_config: dict[str, str], page_config: dict[str, str], final_file_path: str, output_dir: str) -> None:
@@ -15,13 +16,13 @@ def create_html(theme: str, global_config: dict[str, str], page_config: dict[str
     # Get name to use for output file
     output_file_name = get_file_name(final_file_path)[0]
     # Copy template file from theme to output dir, thanks https://stackoverflow.com/a/123212 
-    shutil.copyfile(f'../{theme}/templates/base.html', f"../{output_dir}/{output_file_name}.html")
+    shutil.copyfile(Path(f"../{theme}/templates/base.html"), Path(f"../{output_dir}") / f"{output_file_name}.html")
 
-    final_file = open(f"../{final_file_path}", 'r')
+    final_file = open(Path(f"../{final_file_path}"), 'r')
 
     # Thanks https://www.geeksforgeeks.org/python/how-to-search-and-replace-text-in-a-file-in-python/ for reading and writing to portion of file
     # Will replace portions in html file with our content
-    with open(f"../{output_dir}/{output_file_name}.html", 'r') as output_file:
+    with open(Path(f"../{output_dir}") / f"{output_file_name}.html", 'r') as output_file:
         # Replace content with associated data for this page
         data = output_file.read()
         data = data.replace("{{CONTENT}}", final_file.read())
@@ -44,7 +45,7 @@ def create_html(theme: str, global_config: dict[str, str], page_config: dict[str
             if key == "<CONFIG_TITLE>":
                 data = data.replace("{{TITLE}}", val)
 
-    with open(f"../{output_dir}/{output_file_name}.html", 'w') as output_file:
+    with open(Path(f"../{output_dir}") / f"{output_file_name}.html", 'w') as output_file:
         output_file.write(data)
     
     final_file.close()

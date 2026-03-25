@@ -5,8 +5,9 @@
     default: Create default input files, clear existing files
 '''
 
-from file import create_dir, remove_dir
 import datetime
+from pathlib import Path
+from file import create_dir, remove_dir
 
 # Each element is a Markdown line in the file
 DEFAULT_GLOBAL_CONFIG = [
@@ -165,7 +166,7 @@ def create_index_md() -> None:
     create_dir("input")
 
     # Create new index file
-    input_file = open("../input/index.md", 'w')
+    input_file = open(Path("../input/index.md"), 'w')
     input_file.write(DEFAULT_INDEX)
     input_file.write(DEFAULT_FEATURES)
 
@@ -179,7 +180,7 @@ def create_global_md() -> None:
     create_dir("input")
 
     # Create new global file
-    input_file = open("../input/global.md", 'w')
+    input_file = open(Path("../input/global.md"), 'w')
     for line in DEFAULT_GLOBAL_CONFIG:
         input_file.write(f"{line}\n")
 
@@ -196,8 +197,9 @@ def create_post() -> None:
     create_dir("input/posts")
 
     # Create new post file
-    file_name = datetime.datetime.now()
-    input_file = open(f"../input/posts/{file_name}.md", 'w')
+    # Remove colons from time as they can't be in filenames on Windows
+    file_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S.%f")
+    input_file = open(Path(f"../input/posts") / f"{file_name}.md", 'w')
 
     # Create config section
     input_file.write("{\n")
