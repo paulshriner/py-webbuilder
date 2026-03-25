@@ -44,7 +44,7 @@ def main() -> None:
         file_name, file_ext = get_file_name(post)
         if file_ext == ".md":
             page_config = parse_content_file(f'input/posts/{post}')
-            page_config["<CONFIG_CSS_PATH>"] = 'styles/styles.css'
+            page_config["<CONFIG_CSS_PATH>"] = '../styles/styles.css'
             generate_html(f'temp/{file_name}.tmp')
             create_html('themes/default', global_config, page_config, f'temp/{file_name}.final', 'output/posts')
 

@@ -118,6 +118,8 @@ def parse_config_block(line: str) -> tuple[bool, str, str]:
 def parse_line(token: str, line: str) -> str:
     # Thanks https://gist.github.com/elfefe/ef08e583e276e7617cd316ba2382fc40 for Markdown regexes
     link_pattern = r'\[(.*?)\]\((.*?)\s?(?:"(.*?)")?\)'
+    # Thanks https://www.freecodecamp.org/news/how-to-write-a-regular-expression-for-a-url/ for URL regex
+    url_pattern = r'(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?\/[a-zA-Z0-9]{2,}|((https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?)|(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})?'
     # Only use astericks not underlines
     bold_pattern = r'\*\*(.+?)\*\*'
     italic_pattern = r'\*(.+?)\*'
@@ -131,10 +133,21 @@ def parse_line(token: str, line: str) -> str:
     
     # Thanks https://www.geeksforgeeks.org/python/re-matchobject-group-function-in-python-regex/ for match group
     def convert_link(match):
-        preview = match.group(2)
-        link = match.group(1)
+        link = match.group(2)
+        preview = match.group(1)
 
-        return f'<a href="{preview}" target="_blank">{link}</a>'
+        # First check if link is an external URL
+        if not re.search(url_pattern, link):
+            # If not, assume we have a file path
+            # This may/may not be valid, but this checks for path traversal
+            parent_dir = Path.cwd().parent
+            full_path = (parent_dir / link).resolve()
+            try:
+                full_path.relative_to(parent_dir)
+            except ValueError:
+                link = ""
+
+        return f'<a href="{link}" target="_blank">{preview}</a>'
     
     def convert_bold(match):
         return f'<strong>{match.group(1)}</strong>'
