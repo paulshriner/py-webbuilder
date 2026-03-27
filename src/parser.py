@@ -125,29 +125,50 @@ def parse_line(token: str, line: str) -> str:
     italic_pattern = r'\*(.+?)\*'
     inline_code_pattern = r'`(.+?)`'
     escape_code_pattern = r'``(.+?)``'
+    image_pattern = r'!\[(.*?)\]\((.*?)\s?(?:"(.*?)")?\)'
 
     # Hold inline code sections
     code_lines = []
     # NOTE: If the user entered this exact phrase it could cause issues. We will just assume the user won't do this as it's a very specific phrase.
     code_placeholder = "{{CODE_LINE_NUM}}"
+
+    # Separate path verfication as this is used by links and images
+    def check_path(path):
+        # First check if link is an external URL
+        if not re.match(url_pattern, path):
+            # If not, assume we have a file path
+            # This may/may not be valid, but this checks for path traversal
+            parent_dir = Path.cwd().parent
+            full_path = (parent_dir / path).resolve()
+            try:
+                full_path.relative_to(parent_dir)
+            except ValueError:
+                return False
+
+        return True
     
     # Thanks https://www.geeksforgeeks.org/python/re-matchobject-group-function-in-python-regex/ for match group
     def convert_link(match):
         link = match.group(2)
         preview = match.group(1)
 
-        # First check if link is an external URL
-        if not re.search(url_pattern, link):
-            # If not, assume we have a file path
-            # This may/may not be valid, but this checks for path traversal
-            parent_dir = Path.cwd().parent
-            full_path = (parent_dir / link).resolve()
-            try:
-                full_path.relative_to(parent_dir)
-            except ValueError:
-                link = ""
+        # If link is not valid simply blank it out
+        if not check_path(link):
+            link = ""
 
         return f'<a href="{link}" target="_blank">{preview}</a>'
+    
+    # TODO: Add support for special case links like emails
+    def convert_image(match):
+        link = match.group(2)
+        title = match.group(3)
+        alt = match.group(1)
+
+        # If link is not valid simply blank it out
+        if not check_path(link):
+            link = ""
+
+        return f'<img src="{link}" title="{title}" alt="{title}" class="image">'
     
     def convert_bold(match):
         return f'<strong>{match.group(1)}</strong>'
@@ -171,10 +192,14 @@ def parse_line(token: str, line: str) -> str:
     elif token != "<CONFIG_HOME>" and token != "<CONFIG_TITLE>":
         # Convert code lines
         # Inline code will be stored as placeholders so inner elements do not get parsed
+        # Thanks https://www.geeksforgeeks.org/python/re-sub-python-regex/ for re.sub
         parsed_line = re.sub(escape_code_pattern, convert_escape_code, parsed_line)
         parsed_line = re.sub(inline_code_pattern, convert_inline_code, parsed_line)
+
+        # Convert images
+        parsed_line = re.sub(image_pattern, convert_image, parsed_line)
         
-        # Thanks https://www.geeksforgeeks.org/python/re-sub-python-regex/ for re.sub
+        # Convert links
         parsed_line = re.sub(link_pattern, convert_link, parsed_line)
 
         # Convert bold and italic
@@ -260,4 +285,4 @@ def parse_markdown_block(line: str) -> tuple[bool, str, str]:
 # Thanks https://www.w3schools.com/html/html_entities.asp for list of character entities
 # TODO: Convert other character entities to be safe 
 def sanitize_line(line: str) -> str:
-    return line.replace('<', '&lt;').replace('>', '&gt;').replace("'", '&apos;').replace('"', '&quot;')
+    return line.replace('<', '&lt;').replace('>', '&gt;').replace("'", '&apos;')

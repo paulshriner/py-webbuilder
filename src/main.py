@@ -6,7 +6,7 @@
 '''
 
 from default import create_index_md, create_global_md, create_post, clear_all
-from file import file_exists, get_all_dir_files, get_file_name, copy_dir
+from file import file_exists, get_all_dir_files, get_file_name, copy_dir, create_dir
 from parser import parse_content_file
 from gen import generate_html
 from finalize import create_html
@@ -50,6 +50,10 @@ def main() -> None:
 
     # Copy styles from theme to output
     copy_dir("themes/default/styles", "output/styles")
+
+    # Copy images from input to output
+    create_dir("input/images")
+    copy_dir("input/images", "output/images")
 
 if __name__ == "__main__":
     main()

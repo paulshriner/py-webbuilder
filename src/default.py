@@ -157,6 +157,28 @@ This line has a horizontal rule under it.
 HTML:
 This line has a horizontal rule under it.
 ***
+
+### Links
+You can create a link to files within the input folder or to external websites. When you link to a file, do `posts/post.md`, not `input/posts/post.md` or similar.
+
+Markdown:
+```
+[Here](https://duckduckgo.com) is a link to the search engine DuckDuckGo.
+```
+
+HTML:
+[Here](https://duckduckgo.com) is a link to the search engine DuckDuckGo.
+
+### Images
+Images are similar to links, but with an exclamation point(!) preceding the left bracket([), and after the link you can add a title in quotation marks.
+
+Markdown:
+```
+![Alt Text of Image](/images/image.png "Title of Image")
+```
+
+HTML:
+(The Markdown code given is an example but if it wasn't you'd see an image here.)
 '''
 
 # Creates a index.md file with default content
