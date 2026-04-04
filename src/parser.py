@@ -53,14 +53,14 @@ def parse_content_file(file_path: str) -> dict:
         # If in a code block, add code block tag then set in code block flag
         if cur_line[1] == "<CODE_BLOCK>":
             in_code_block = not in_code_block
-            temp_file.write(cur_line[1] + '\n')
+            temp_file.write(f'{cur_line[1]}\n')
             temp_file.write("<NEW_LINE>\n")
             continue
 
         # While in a code block, do not parse any text, just sanitize as is
         if in_code_block:
             if cur_line[1] == "<EMPTY_LINE>":
-                temp_file.write(cur_line[1] + '\n')
+                temp_file.write(f'{cur_line[1]}\n')
             else:
                 temp_file.write("<TEXT>\n")
                 temp_file.write(sanitize_line(line))
@@ -69,11 +69,11 @@ def parse_content_file(file_path: str) -> dict:
         
         while not cur_line[0]:
             # Need to reprocess for more block elements, such as a heading in a list
-            temp_file.write(cur_line[1] + '\n')
+            temp_file.write(f'{cur_line[1]}\n')
             cur_line = parse_markdown_block(cur_line[2])
         else:
             # Done with block elements, parse inline elements
-            temp_file.write(cur_line[1] + '\n')
+            temp_file.write(f'{cur_line[1]}\n')
             temp_file.write(parse_line(cur_line[1], sanitize_line(cur_line[2])))
         temp_file.write("<NEW_LINE>\n")
 
@@ -126,6 +126,9 @@ def parse_line(token: str, line: str) -> str:
     inline_code_pattern = r'`(.+?)`'
     escape_code_pattern = r'``(.+?)``'
     image_pattern = r'!\[(.*?)\]\((.*?)\s?(?:"(.*?)")?\)'
+    quick_link_pattern = r'&lt;(.+?)&gt;'
+    # Thanks https://regex101.com/r/lHs2R3/1 for email regex
+    email_pattern = r'^[\w\-\.]+@([\w-]+\.)+[\w-]{2,}$'
 
     # Hold inline code sections
     code_lines = []
@@ -148,17 +151,34 @@ def parse_line(token: str, line: str) -> str:
         return True
     
     # Thanks https://www.geeksforgeeks.org/python/re-matchobject-group-function-in-python-regex/ for match group
+    # TODO: Links currently need to have https://, not sure if this should be a feature or a bug (e.g. google.com could be a file not a website)
     def convert_link(match):
         link = match.group(2)
         preview = match.group(1)
+        title = match.group(3)
 
         # If link is not valid simply blank it out
         if not check_path(link):
             link = ""
 
-        return f'<a href="{link}" target="_blank">{preview}</a>'
+        return f'<a href="{link}" target="_blank" title="{title if title else ""}">{preview if preview else link}</a>'
     
-    # TODO: Add support for special case links like emails
+    # TODO: Other potential identifiers like phone numbers
+    def convert_quick_link(match):
+        link = match.group(1)
+        title = link
+
+        # First check for email, if so need to add mailto: prefix
+        if re.match(email_pattern, link):
+            link = f'mailto:{link}'
+
+        # Else assume it's a URL
+        # Do same file path check as regular link
+        if not check_path(link):
+            link = ""
+
+        return f'<a href="{link}" target="_blank">{title}</a>'
+    
     def convert_image(match):
         link = match.group(2)
         title = match.group(3)
@@ -168,7 +188,7 @@ def parse_line(token: str, line: str) -> str:
         if not check_path(link):
             link = ""
 
-        return f'<img src="{link}" title="{title}" alt="{title}" class="image">'
+        return f'<img src="{link}" title="{title if title else ""}" alt="{alt if alt else ""}" class="image">'
     
     def convert_bold(match):
         return f'<strong>{match.group(1)}</strong>'
@@ -200,6 +220,7 @@ def parse_line(token: str, line: str) -> str:
         parsed_line = re.sub(image_pattern, convert_image, parsed_line)
         
         # Convert links
+        parsed_line = re.sub(quick_link_pattern, convert_quick_link, parsed_line)
         parsed_line = re.sub(link_pattern, convert_link, parsed_line)
 
         # Convert bold and italic
