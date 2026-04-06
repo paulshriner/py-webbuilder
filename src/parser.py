@@ -117,7 +117,7 @@ def parse_config_block(line: str) -> tuple[bool, str, str]:
 # TODO: Parse other elements
 def parse_line(token: str, line: str) -> str:
     # Thanks https://gist.github.com/elfefe/ef08e583e276e7617cd316ba2382fc40 for Markdown regexes
-    link_pattern = r'\[(.*?)\]\((.*?)\s?(?:"(.*?)")?\)'
+    link_pattern = r'\[(.*?)\]\((.*?)\s?(?:&quot;(.*?)&quot;)?\)'
     # Thanks https://www.freecodecamp.org/news/how-to-write-a-regular-expression-for-a-url/ for URL regex
     url_pattern = r'(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?\/[a-zA-Z0-9]{2,}|((https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z]{2,}(\.[a-zA-Z]{2,})(\.[a-zA-Z]{2,})?)|(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})?'
     # Only use astericks not underlines
@@ -125,10 +125,13 @@ def parse_line(token: str, line: str) -> str:
     italic_pattern = r'\*(.+?)\*'
     inline_code_pattern = r'`(.+?)`'
     escape_code_pattern = r'``(.+?)``'
-    image_pattern = r'!\[(.*?)\]\((.*?)\s?(?:"(.*?)")?\)'
+    image_pattern = r'!\[(.*?)\]\((.*?)\s?(?:&quot;(.*?)&quot;)?\)'
     quick_link_pattern = r'&lt;(.+?)&gt;'
     # Thanks https://regex101.com/r/lHs2R3/1 for email regex
     email_pattern = r'^[\w\-\.]+@([\w-]+\.)+[\w-]{2,}$'
+    # Thanks https://stackoverflow.com/a/16699507 for phone regex
+    phone_pattern = r'^(\+\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$'
+    escape_backslash_pattern = r'\\(.)'
 
     # Hold inline code sections
     code_lines = []
@@ -163,21 +166,26 @@ def parse_line(token: str, line: str) -> str:
 
         return f'<a href="{link}" target="_blank" title="{title if title else ""}">{preview if preview else link}</a>'
     
-    # TODO: Other potential identifiers like phone numbers
     def convert_quick_link(match):
         link = match.group(1)
         title = link
 
-        # First check for email, if so need to add mailto: prefix
+        # Check for email, phone and add prefix
+        # If so we do not want to open a new tab so update flag accordingly
+        new_tab = True
         if re.match(email_pattern, link):
             link = f'mailto:{link}'
+            new_tab = False
+        elif re.match(phone_pattern, link):
+            link = f'tel:{link}'
+            new_tab = False
 
         # Else assume it's a URL
         # Do same file path check as regular link
         if not check_path(link):
             link = ""
 
-        return f'<a href="{link}" target="_blank">{title}</a>'
+        return f'<a href="{link}" target="{"_blank" if new_tab else ""}">{title}</a>'
     
     def convert_image(match):
         link = match.group(2)
@@ -200,6 +208,52 @@ def parse_line(token: str, line: str) -> str:
         code_lines.append(match.group(1))
         return code_placeholder.replace("NUM", str(len(code_lines) - 1))
     
+    # Convert char if it needs escaped, otherwise return as is
+    # NOTE: You need to make sure that if you're using character codes in other parts (like regexes) you do not overwrite them here
+    # Example is < and >, which is used in quick links
+    def convert_backslash_escape(match):
+        symbol = match.group(1)
+        
+        match symbol:
+            case "\\":
+                return "&#92;"
+            case '`':
+                return "&#96;"
+            case '*':
+                return "&#42;"
+            case '_':
+                return "&#95;"
+            case '{':
+                return "&#123;"
+            case '}':
+                return "&#125;"
+            case '[':
+                return "&#91;"
+            case ']':
+                return "&#93;"
+            case '<':
+                return "&#60;"
+            case '>':
+                return "&#62;"
+            case '(':
+                return "&#40;"
+            case ')':
+                return "&#41;"
+            case '#':
+                return "&#35;"
+            case '+':
+                return "&#43;"
+            case '-':
+                return "&#45;"
+            case '.':
+                return "&#46;"
+            case '!':
+                return "&#33;"
+            case '|':
+                return "&#124;"
+
+        return match.group(0)
+    
     # Navigation links should just be links, that's it
     parsed_line = line
     if token == "<CONFIG_NAV_LINKS>":
@@ -210,9 +264,12 @@ def parse_line(token: str, line: str) -> str:
             parsed_line += f'<li><a href="{i[1]}" target="_blank">{i[0]}</a></li>'
     # Anything else can be text and links, except the home link which is just text (link is always the home page)
     elif token != "<CONFIG_HOME>" and token != "<CONFIG_TITLE>":
+        # Convert escaped chars using backslash
+        # Thanks https://www.geeksforgeeks.org/python/re-sub-python-regex/ for re.sub
+        parsed_line = re.sub(escape_backslash_pattern, convert_backslash_escape, parsed_line)
+        
         # Convert code lines
         # Inline code will be stored as placeholders so inner elements do not get parsed
-        # Thanks https://www.geeksforgeeks.org/python/re-sub-python-regex/ for re.sub
         parsed_line = re.sub(escape_code_pattern, convert_escape_code, parsed_line)
         parsed_line = re.sub(inline_code_pattern, convert_inline_code, parsed_line)
 
@@ -306,4 +363,4 @@ def parse_markdown_block(line: str) -> tuple[bool, str, str]:
 # Thanks https://www.w3schools.com/html/html_entities.asp for list of character entities
 # TODO: Convert other character entities to be safe 
 def sanitize_line(line: str) -> str:
-    return line.replace('<', '&lt;').replace('>', '&gt;').replace("'", '&apos;')
+    return line.replace('<', '&lt;').replace('>', '&gt;').replace("'", '&apos;').replace('"', '&quot;')
