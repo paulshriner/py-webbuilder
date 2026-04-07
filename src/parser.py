@@ -108,6 +108,9 @@ def parse_config_block(line: str) -> tuple[bool, str, str]:
     # Page title
     if parts[0] == "Title":
         return (False, "<CONFIG_TITLE>", parts[1])
+    # Page summary
+    if parts[0] == "Summary":
+        return (False, "<CONFIG_SUMMARY>", parts[1])
     
     # TODO: Rest of config entries
     return (False, "<ERROR>", line)
@@ -261,7 +264,17 @@ def parse_line(token: str, line: str) -> str:
 
         parsed_line = ""
         for i in matches:
-            parsed_line += f'<li><a href="{i[1]}" target="_blank">{i[0]}</a></li>'
+            link = i[1]
+            title = i[0]
+
+            # If link is not valid simply blank it out
+            if not check_path(link):
+                link = ""
+            # If link is not url need to add html extension
+            elif not re.match(link, url_pattern):
+                link = f'{link}.html'
+
+            parsed_line += f'<li><a href="{link}">{title}</a></li>'
     # Anything else can be text and links, except the home link which is just text (link is always the home page)
     elif token != "<CONFIG_HOME>" and token != "<CONFIG_TITLE>":
         # Convert escaped chars using backslash

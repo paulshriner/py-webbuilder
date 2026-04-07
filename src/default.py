@@ -189,6 +189,13 @@ def create_index_md() -> None:
 
     # Create new index file
     input_file = open(Path("../input/index.md"), 'w')
+
+    # Write config section
+    input_file.write('{\n')
+    input_file.write('Summary: The main page of your website.\n')
+    input_file.write('}\n')
+
+    # Write content for the page
     input_file.write(DEFAULT_INDEX)
     input_file.write(DEFAULT_FEATURES)
 
@@ -226,6 +233,7 @@ def create_post() -> None:
     # Create config section
     input_file.write("{\n")
     input_file.write(f"Title: {file_name}\n")
+    input_file.write('Summary: A post on your website.\n')
     input_file.write("}\n")
 
     # Create post content
@@ -234,6 +242,29 @@ def create_post() -> None:
 
     # Close file when done
     input_file.close()
+
+# Create a final file for the posts page
+# Returns path to the file
+def create_final_posts(content: list[str]) -> str:
+    # Create temp dir if needed
+    create_dir("temp")
+
+    # Create new file
+    # Remove colons from time as they can't be in filenames on Windows
+    input_file = open(Path(f"../temp") / f"posts.final", 'w')
+
+    # Write heading of file
+    input_file.write("<h1>Posts</h1>\n")
+
+    # Write lines to file
+    for i in content:
+        input_file.write(f'{i}\n')
+        input_file.write("<br>\n")
+
+    # Close file when done
+    input_file.close()
+
+    return f'temp/posts.final'
 
 # Removes all content directories
 # WARNING: All content in directory will be lost!
