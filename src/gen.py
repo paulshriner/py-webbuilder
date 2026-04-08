@@ -7,12 +7,16 @@
 
 from typing import TextIO
 from pathlib import Path
-from file import get_file_name, peek
+from file import get_file_name, peek, is_modified
 
 # Generates HTML code from a parsed intermediate file
 def generate_html(temp_file_path: str) -> None:
     # Get name to use for temp file
     temp_file_name = get_file_name(temp_file_path)[0]
+
+    # See if a final file already exists and is newer than the input file, if so can return early
+    if not is_modified(Path(f'../{temp_file_path}'), Path(f"../temp") / f"{temp_file_name}.final"):
+        return
 
     temp_ptr = open(Path(f"../{temp_file_path}"), 'r')
     final_ptr = open(Path(f"../temp") / f"{temp_file_name}.final", 'w')

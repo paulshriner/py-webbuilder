@@ -21,7 +21,6 @@ def main() -> None:
     # Get global config vars from global.md (if there's content it will be ignored)
     if not file_exists('input/global.md'):
         create_global_md()
-    # TODO: Need to fix links being broken on posts pages (because posts are in a subdirectory)
     global_config = parse_content_file('input/global.md')
     global_config["<CONFIG_HOME_LINK>"] = 'index.html'
 
@@ -53,6 +52,13 @@ def main() -> None:
     for post in posts:
         file_name, file_ext = get_file_name(post)
         if file_ext == ".md":
+            # Redirect links in heading to proper locations
+            global_config["<CONFIG_HOME_LINK>"] = '../index.html'
+            global_config["<CONFIG_NAV_LINKS>"] = global_config["<CONFIG_NAV_LINKS>"].replace("href=\"", "href=\"../")
+            # Make sure that links do not get treated as files
+            global_config["<CONFIG_NAV_LINKS>"] = global_config["<CONFIG_NAV_LINKS>"].replace("href=\"../https", "href=\"https")
+            global_config["<CONFIG_NAV_LINKS>"] = global_config["<CONFIG_NAV_LINKS>"].replace("href=\"../http", "href=\"http")
+            
             page_config = parse_content_file(f'input/posts/{post}')
             page_config["<CONFIG_CSS_PATH>"] = '../styles/styles.css'
             if not page_config["<CONFIG_TITLE>"]:
@@ -66,6 +72,9 @@ def main() -> None:
             posts_html.append(create_post_card(f"posts/{file_name}.html", page_config["<CONFIG_TITLE>"], page_config["<CONFIG_SUMMARY>"]))
 
     # Create posts page
+    global_config["<CONFIG_HOME_LINK>"] = 'index.html'
+    global_config["<CONFIG_NAV_LINKS>"] = global_config["<CONFIG_NAV_LINKS>"].replace("href=\"../", "href=\"")
+
     posts_file_path = create_final_posts(posts_html)
     page_config = {
         "<CONFIG_TITLE>": "Posts",

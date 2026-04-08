@@ -7,7 +7,7 @@
 
 import re
 from pathlib import Path
-from file import get_file_name, create_dir
+from file import get_file_name, create_dir, is_modified
 
 # Entry function to parse a Markdown file
 # Takes the path to a Markdown file
@@ -21,11 +21,11 @@ def parse_content_file(file_path: str) -> dict:
     # Create temp dir if needed
     create_dir("temp")
     input_file = open(Path(f"../{file_path}"), 'r')
-    temp_file = open(Path("../temp") / f"{file_name}.tmp", 'w')
     # Keep track of if we're in config, as these need to be handled separately
     in_file = False
     in_config = False
     in_code_block = False
+    temp_file_created = False
     for line in input_file:
         # See if we're in config
         if not in_file:
@@ -47,6 +47,15 @@ def parse_content_file(file_path: str) -> dict:
                 else:
                     config[cur_line[1]] = sanitize_line(cur_line[2][0:-1])
             continue
+
+        # See if a temp file already exists and is newer than the input file, if so can return early
+        if not temp_file_created:
+            if not is_modified(Path(f'../{file_path}'), Path("../temp") / f"{file_name}.tmp"):
+                input_file.close()
+                return config
+            elif not temp_file_created:
+                temp_file = open(Path("../temp") / f"{file_name}.tmp", 'w')
+                temp_file_created = True
 
         # Either we're done with config or user never added one, so proceed with standard markdown
         cur_line = parse_markdown_block(line)
@@ -79,7 +88,11 @@ def parse_content_file(file_path: str) -> dict:
 
     # Close files when done
     input_file.close()
-    temp_file.close()
+    # Needed as if a file has no content, the temp file will never be opened
+    try:
+        temp_file.close()
+    except UnboundLocalError:
+        pass
 
     return config
 
@@ -167,15 +180,13 @@ def parse_line(token: str, line: str) -> str:
         if not check_path(link):
             link = ""
 
-        return f'<a href="{link}" target="_blank" title="{title if title else ""}">{preview if preview else link}</a>'
+        return f'<a href="{link}" title="{title if title else ""}">{preview if preview else link}</a>'
     
     def convert_quick_link(match):
         link = match.group(1)
         title = link
 
         # Check for email, phone and add prefix
-        # If so we do not want to open a new tab so update flag accordingly
-        new_tab = True
         if re.match(email_pattern, link):
             link = f'mailto:{link}'
             new_tab = False
@@ -188,7 +199,7 @@ def parse_line(token: str, line: str) -> str:
         if not check_path(link):
             link = ""
 
-        return f'<a href="{link}" target="{"_blank" if new_tab else ""}">{title}</a>'
+        return f'<a href="{link}">{title}</a>'
     
     def convert_image(match):
         link = match.group(2)
@@ -271,7 +282,7 @@ def parse_line(token: str, line: str) -> str:
             if not check_path(link):
                 link = ""
             # If link is not url need to add html extension
-            elif not re.match(link, url_pattern):
+            elif not re.match(url_pattern, link):
                 link = f'{link}.html'
 
             parsed_line += f'<li><a href="{link}">{title}</a></li>'

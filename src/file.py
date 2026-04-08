@@ -8,6 +8,7 @@
 from shutil import copytree, rmtree
 from typing import TextIO
 from pathlib import Path
+from datetime import datetime
 
 # Helper function that returns the directory to work from
 # NOTE: This will throw an exception for path traversals like '../../'.
@@ -89,3 +90,19 @@ def remove_dir(dir_path: str) -> None:
         rmtree(get_working_dir(dir_path))
     except FileNotFoundError:
         pass
+
+# Checks if p1 was modified later than p2, this means it was edited
+# Returns True if it was edited, false if not
+# Thanks https://stackoverflow.com/a/57613817
+def is_modified(p1: Path, p2: Path) -> bool:
+    # Get modified times for both files
+    # If either file is not found assume we need a new file
+    try:
+        p1_time = p1.stat().st_mtime
+        p2_time = p2.stat().st_mtime
+    except FileNotFoundError:
+        return True
+    p1_timestamp = datetime.fromtimestamp(p1_time)
+    p2_timestamp = datetime.fromtimestamp(p2_time)
+
+    return p1_timestamp > p2_timestamp
