@@ -57,7 +57,7 @@ def copy_dir(source: str, dest: str) -> None:
 # If dir doesn't exist this will return an empty list
 def get_all_dir_files(dir: str) -> list[str]:
     files = []
-    
+
     try:
         # Append every file in dir to files list
         # This will not go into subdirectories
@@ -66,7 +66,7 @@ def get_all_dir_files(dir: str) -> list[str]:
                 files.append(e.name)
     except FileNotFoundError:
         pass
-    
+
     return files
 
 # Return a line without advancing the file pointer (file peek)

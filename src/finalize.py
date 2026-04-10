@@ -15,7 +15,7 @@ def create_html(theme: str, global_config: dict[str, str], page_config: dict[str
 
     # Get name to use for output file
     output_file_name = get_file_name(final_file_path)[0]
-    # Copy template file from theme to output dir, thanks https://stackoverflow.com/a/123212 
+    # Copy template file from theme to output dir, thanks https://stackoverflow.com/a/123212
     shutil.copyfile(Path(f"../{theme}/templates/base.html"), Path(f"../{output_dir}") / f"{output_file_name}.html")
 
     final_file = open(Path(f"../{final_file_path}"), 'r')

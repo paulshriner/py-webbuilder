@@ -13,7 +13,7 @@ from file import create_dir, remove_dir
 DEFAULT_GLOBAL_CONFIG = [
     "{",
     "Home: A New Website!",
-    "Links: [Posts](posts), [About](about)",
+    "Links: [Posts](posts)",
     "Footer: You can add your name or copyright info here!",
     "}"
 ]

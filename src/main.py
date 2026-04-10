@@ -11,10 +11,47 @@ from parser import parse_content_file
 from gen import generate_html
 from finalize import create_html
 
-def main() -> None:
-    # TODO: Remove later
-    clear_all()
+def menu() -> None:
+    # Initial welcome message
+    print("Welcome to py-webbuilder!")
+    print("Created by Paul Shriner\n")
 
+    print("What would you like to do today?\n")
+    choice = -1
+    while choice < 1 or choice > 4:
+        # Present choices to user
+        print("1. Run with previously generated data")
+        print("2. Clear temp files then run")
+        print("3. Clear everything then run")
+        print("4. Exit\n")
+
+        # Validate choice, make sure it is integer
+        choice = input("Enter your choice here: ")
+        try:
+            choice = int(choice)
+        except TypeError:
+            choice = -1
+
+        # Since 3 is destructive give the user a warning
+        if choice == 3:
+            print("WARNING: This will delete your input files! Do you want to continue?")
+            confirm = input("Enter Y to continue, anything else to go back: ")
+            if confirm != 'Y':
+                choice = -1
+
+    # Perform the operation
+    if choice == 2:
+        clear_all()
+    elif choice == 3:
+        clear_all(True)
+
+    if choice != 4:
+        main()
+        print("Program ran successfully, open output/index.html to access your website!")
+    else:
+        print("Program ran without making changes.")
+
+def main() -> None:
     # Store HTML for posts file
     posts_html = []
     
@@ -94,4 +131,4 @@ def create_post_card(link: str, title: str, summary: str) -> str:
     return f'<a href={link} class="post-link"><div class="post-container"><h2>{title}</h2><p>{summary}</p></div></a>'
 
 if __name__ == "__main__":
-    main()
+    menu()

@@ -14,7 +14,7 @@ from file import get_file_name, create_dir, is_modified
 # Will create tmp file with parsed content
 def parse_content_file(file_path: str) -> dict:
     config = {}
-    
+
     # Get name to use for temp file
     file_name = get_file_name(file_path)[0]
 
@@ -34,7 +34,7 @@ def parse_content_file(file_path: str) -> dict:
             if cur_line[1] == "<CONFIG_BEGIN>":
                 in_config = True
                 continue
-        
+
         # If in config, keep going until end bracket found
         # (If <CONFIG_END> is not found it will keep going in config, but this is an invalid input)
         if in_config:
@@ -75,7 +75,7 @@ def parse_content_file(file_path: str) -> dict:
                 temp_file.write(sanitize_line(line))
             temp_file.write("<NEW_LINE>\n")
             continue
-        
+
         while not cur_line[0]:
             # Need to reprocess for more block elements, such as a heading in a list
             temp_file.write(f'{cur_line[1]}\n')
@@ -103,12 +103,12 @@ def parse_config_block(line: str) -> tuple[bool, str, str]:
         return (True, "<CONFIG_BEGIN>", "")
     if line.rstrip() == '}':
         return (True, "<CONFIG_END>", "")
-    
+
     parts = line.split(": ")
     # Config entries should only have two parts
     if len(parts) != 2:
         return (True, "<ERROR>", "")
-    
+
     # Home entry (appears in the left corner of page)
     if parts[0] == "Home":
         return (True, "<CONFIG_HOME>", parts[1])
@@ -124,7 +124,7 @@ def parse_config_block(line: str) -> tuple[bool, str, str]:
     # Page summary
     if parts[0] == "Summary":
         return (False, "<CONFIG_SUMMARY>", parts[1])
-    
+
     # TODO: Rest of config entries
     return (False, "<ERROR>", line)
 
@@ -168,7 +168,7 @@ def parse_line(token: str, line: str) -> str:
                 return False
 
         return True
-    
+
     # Thanks https://www.geeksforgeeks.org/python/re-matchobject-group-function-in-python-regex/ for match group
     # TODO: Links currently need to have https://, not sure if this should be a feature or a bug (e.g. google.com could be a file not a website)
     def convert_link(match):
@@ -181,7 +181,7 @@ def parse_line(token: str, line: str) -> str:
             link = ""
 
         return f'<a href="{link}" title="{title if title else ""}">{preview if preview else link}</a>'
-    
+
     def convert_quick_link(match):
         link = match.group(1)
         title = link
@@ -200,7 +200,7 @@ def parse_line(token: str, line: str) -> str:
             link = ""
 
         return f'<a href="{link}">{title}</a>'
-    
+
     def convert_image(match):
         link = match.group(2)
         title = match.group(3)
@@ -211,7 +211,7 @@ def parse_line(token: str, line: str) -> str:
             link = ""
 
         return f'<img src="{link}" title="{title if title else ""}" alt="{alt if alt else ""}" class="image">'
-    
+
     def convert_bold(match):
         return f'<strong>{match.group(1)}</strong>'
     def convert_italic(match):
@@ -221,13 +221,13 @@ def parse_line(token: str, line: str) -> str:
     def convert_inline_code(match):
         code_lines.append(match.group(1))
         return code_placeholder.replace("NUM", str(len(code_lines) - 1))
-    
+
     # Convert char if it needs escaped, otherwise return as is
     # NOTE: You need to make sure that if you're using character codes in other parts (like regexes) you do not overwrite them here
     # Example is < and >, which is used in quick links
     def convert_backslash_escape(match):
         symbol = match.group(1)
-        
+
         match symbol:
             case "\\":
                 return "&#92;"
@@ -267,7 +267,7 @@ def parse_line(token: str, line: str) -> str:
                 return "&#124;"
 
         return match.group(0)
-    
+
     # Navigation links should just be links, that's it
     parsed_line = line
     if token == "<CONFIG_NAV_LINKS>":
@@ -291,7 +291,7 @@ def parse_line(token: str, line: str) -> str:
         # Convert escaped chars using backslash
         # Thanks https://www.geeksforgeeks.org/python/re-sub-python-regex/ for re.sub
         parsed_line = re.sub(escape_backslash_pattern, convert_backslash_escape, parsed_line)
-        
+
         # Convert code lines
         # Inline code will be stored as placeholders so inner elements do not get parsed
         parsed_line = re.sub(escape_code_pattern, convert_escape_code, parsed_line)
@@ -299,7 +299,7 @@ def parse_line(token: str, line: str) -> str:
 
         # Convert images
         parsed_line = re.sub(image_pattern, convert_image, parsed_line)
-        
+
         # Convert links
         parsed_line = re.sub(quick_link_pattern, convert_quick_link, parsed_line)
         parsed_line = re.sub(link_pattern, convert_link, parsed_line)
@@ -325,11 +325,11 @@ def parse_markdown_block(line: str) -> tuple[bool, str, str]:
     # Nothing in line or user skipped lines
     if not line or line == "\n":
         return (True, "<EMPTY_LINE>", "")
-    
+
     # Fenced code block
     if line == "```\n":
         return (True, "<CODE_BLOCK>", "")
-    
+
     # Consume starting spaces
     indents = 0
     start_line = 0
@@ -349,7 +349,7 @@ def parse_markdown_block(line: str) -> tuple[bool, str, str]:
     for r in hr_patterns:
         if re.search(r, stripped_line[0:-1]):
             return (True, "<HORIZONTAL_RULE>", "")
-    
+
     # Check if line represents a heading
     # If we find one #, keep count until space found
     # If we go past 6 headings, or no space is found, it's not a heading
@@ -368,7 +368,7 @@ def parse_markdown_block(line: str) -> tuple[bool, str, str]:
     # NOTE: Num of indents really does not matter here, it just signifies we start a new list
     if stripped_line.startswith('- ') or stripped_line.startswith('* ') or stripped_line.startswith('+ '):
         return (False, f"<UNORDERED_LIST_{indents}>", stripped_line[2:])
-    
+
     # Check if line represents an ordered list
     list_num = ""
     for i in range(len(stripped_line) - 1):

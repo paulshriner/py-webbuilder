@@ -8,14 +8,14 @@ The idea of this project is to allow creating a static website through Markdown 
 
 ## Features
 
-- Parse common Markdown syntax and generate corresponding HTML [In Progress]
-- Create HTML documents based on template files from default theme or user-specified theme
+- Parse common Markdown syntax and generate corresponding HTML
+- Create HTML documents based on template files from default theme
+    - A different theme can be created as long as it uses the same placeholder variables
 - Use a configuration Markdown file for site-wide constants like the title in the header
 - Sanitize HTML in content files to ensure security
-    - No HTML tags are rendered or converted to Markdown. While other Markdown parsers do this, the goal here is to only use Markdown in an input file, not HTML.
+    - No HTML tags are rendered or converted to Markdown. While other Markdown parsers do this, the goal here is to only use Markdown in an input file, not HTML
 - Check modified file dates of input files and only rebuild if newer than output
-- Have a CLI (GUI?) for setting options [Not Started]
-- ...more as I develop the project!
+- Has a basic CLI to run the program
 
 ## Development Tools
 

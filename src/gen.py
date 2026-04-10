@@ -191,11 +191,11 @@ def get_html_tag(line: str) -> str:
             return "h6"
         case "<TEXT>":
             return "p"
-    
+
     # Any nested list would still use <ul> or <ol>
     if line.startswith("<UNORDERED_LIST"):
         return "ul"
     if line.startswith("<ORDERED_LIST"):
         return "ol"
-    
+
     return line
