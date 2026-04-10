@@ -39,7 +39,7 @@ HTML:
 You can write a paragraph just by writing it out.
 
 ### Headings
-You can have up to 6 levels of headings, by adding pound signs and a space before the text.
+You can have up to 6 levels of headings by adding pound signs and a space before the text.
 
 Markdown:
 ```

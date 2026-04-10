@@ -20,9 +20,9 @@ def menu() -> None:
     choice = -1
     while choice < 1 or choice > 4:
         # Present choices to user
-        print("1. Run with previously generated data")
-        print("2. Clear temp files then run")
-        print("3. Clear everything then run")
+        print("1. Run the program")
+        print("2. Clear temp files")
+        print("3. Clear everything")
         print("4. Exit\n")
 
         # Validate choice, make sure it is integer
@@ -40,16 +40,18 @@ def menu() -> None:
                 choice = -1
 
     # Perform the operation
-    if choice == 2:
-        clear_all()
-    elif choice == 3:
-        clear_all(True)
-
-    if choice != 4:
-        main()
-        print("Program ran successfully, open output/index.html to access your website!")
-    else:
-        print("Program ran without making changes.")
+    match choice:
+        case 1:
+            main()
+            print("Program ran successfully, open output/index.html to access your website!")
+        case 2:
+            clear_all()
+            print("Temp files were cleared successfully.")
+        case 3:
+            clear_all(True)
+            print("Everything was cleared successfully.")
+        case 4:
+            print("Program ran without making changes.")
 
 def main() -> None:
     # Store HTML for posts file

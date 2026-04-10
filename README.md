@@ -17,6 +17,18 @@ The idea of this project is to allow creating a static website through Markdown 
 - Check modified file dates of input files and only rebuild if newer than output
 - Has a basic CLI to run the program
 
+## How to Run
+
+You will need Python installed on your computer. You can download Python from [here](https://www.python.org/downloads/).
+
+To run, first download the project (either from releases or cloning the repo). Then open a terminal and navigate to the src folder. Finally, run `python main.py` in the terminal.
+
+## Usage
+
+You will be presented with a menu of options. Option 1 will run the program. If this is your first time running the program, it will generate default files to work off of. The input folder will have Markdown files you can edit, and the output will be the resultant website. A temp folder is created that has intermediate files, these are not needed after the program is ran but are kept to speed up future runs.
+
+Running the program again using option 1 will recreate your website without deleting any input or intermediate files. Option 2 will delete intermediate files, while option 3 will delete everything.
+
 ## Development Tools
 
 - [Git](https://git-scm.com/), [GitHub](https://github.com/) - Version Control
