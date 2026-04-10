@@ -73,7 +73,7 @@ def main() -> None:
     # NOTE: If user specified a custom title for index.md it will get overwritten here
     # This is intentional, the index title should match the overall title
     page_config["<CONFIG_TITLE>"] = global_config["<CONFIG_HOME>"]
-    if not page_config["<CONFIG_SUMMARY>"]:
+    if not "<CONFIG_SUMMARY>" in page_config:
         page_config["<CONFIG_SUMMARY>"] = "Add a summary to your config section to see something here!"
     generate_html('temp/index.tmp')
     create_html('themes/default', global_config, page_config, 'temp/index.final', 'output')
@@ -100,9 +100,9 @@ def main() -> None:
             
             page_config = parse_content_file(f'input/posts/{post}')
             page_config["<CONFIG_CSS_PATH>"] = '../styles/styles.css'
-            if not page_config["<CONFIG_TITLE>"]:
+            if not "<CONFIG_TITLE>" in page_config:
                 page_config["<CONFIG_TITLE>"] = file_name
-            if not page_config["<CONFIG_SUMMARY>"]:
+            if not "<CONFIG_SUMMARY>" in page_config:
                 page_config["<CONFIG_SUMMARY>"] = "Add a summary to your config section to see something here!"
             generate_html(f'temp/{file_name}.tmp')
             create_html('themes/default', global_config, page_config, f'temp/{file_name}.final', 'output/posts')
